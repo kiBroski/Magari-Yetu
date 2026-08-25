@@ -1,0 +1,24 @@
+# Dependencies and build output
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local uploads and generated media
+public/media/
+
+# CRSP source data may be restricted or licensed
+*.xlsx
+*.xls
+
+# Logs and local tooling
+*.log
+npm-debug.log*
+.vscode/
+.DS_Store
+Thumbs.db
