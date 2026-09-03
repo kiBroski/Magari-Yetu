@@ -9,6 +9,16 @@ const nextConfig = {
   },
   experimental: {
     reactCompiler: false,
+    webpackBuildWorker: false, // Prevents spawns of heavy multi-threaded memory workers
+  },
+  webpack: (config, { dev }) => {
+    if (dev) {
+      // Force disk caching instead of keeping whole ASTs in RAM
+      config.cache = {
+        type: 'filesystem',
+      }
+    }
+    return config
   },
 }
 

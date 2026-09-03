@@ -1,0 +1,2 @@
+import { ServiceProviderForm } from '@/components/site/ServiceProviderForm'
+export default function JoinServicesPage() { return <div className="mx-auto max-w-2xl"><h1 className="font-display text-3xl font-bold text-ink">List your vehicle service</h1><p className="mt-2 mb-6 text-ink-400">Create your public business page. We review providers before showing the verified badge.</p><ServiceProviderForm /></div> }

@@ -7,6 +7,11 @@ import { WhatsAppButton } from '@/components/listings/WhatsAppButton'
 import { VerifiedBadge } from '@/components/badges/VerifiedBadge'
 import { FeaturedBadge } from '@/components/badges/FeaturedBadge'
 import { InspectedBadge } from '@/components/badges/InspectedBadge'
+import { PlatformChatButton } from '@/components/site/PlatformChatButton'
+import { ReportButton } from '@/components/site/ReportButton'
+import Link from 'next/link'
+import { ShareButtons } from '@/components/site/ShareButtons'
+import { ComparisonButton } from '@/components/listings/ComparisonButton'
 
 function formatKes(amount: number) {
   return new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 }).format(amount)
@@ -80,12 +85,19 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
   const specs: [string, string | number | undefined][] = [
     ['Condition', CONDITION_LABELS[listing.condition as keyof typeof CONDITION_LABELS]],
+    ['Make', listing.make],
+    ['Model', listing.model],
+    ['Model number', listing.modelNumber],
     ['Year of manufacture', listing.yearOfManufacture],
     ['Mileage', listing.mileageKm ? `${listing.mileageKm.toLocaleString()} km` : undefined],
     ['Transmission', listing.transmission],
+    ['Drive configuration', listing.driveConfiguration?.toUpperCase()],
     ['Fuel type', listing.fuelType],
-    ['Engine', listing.engineCc ? `${listing.engineCc} cc` : undefined],
+    ['Engine capacity', listing.engineCc ? `${listing.engineCc.toLocaleString()} cc` : undefined],
     ['Body type', listing.bodyType],
+    ['GVW', listing.grossVehicleWeightKg ? `${listing.grossVehicleWeightKg.toLocaleString()} kg` : undefined],
+    ['Seating', listing.seatingCapacity ? `${listing.seatingCapacity} seats` : undefined],
+    ['CRSP (KES)', listing.crspValueKes ? formatKes(listing.crspValueKes) : undefined],
     ['Color', listing.color],
     ['Location', [listing.town, listing.county].filter(Boolean).join(', ')],
     ['Duty status', listing.dutyStatus === 'duty-paid' ? 'Duty paid — ready for transfer' : listing.dutyStatus === 'bonded-pre-clearance' ? 'Bonded — duty not yet cleared' : undefined],
@@ -163,7 +175,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           {listing.negotiable && <p className="text-xs text-ink-400">Negotiable</p>}
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            {isDealer && <span className="text-sm font-medium text-ink">{listing.dealer.businessName}</span>}
+            {isDealer ? <Link href={`/dealers/${listing.dealer.slug}`} className="text-sm font-medium text-ink hover:underline">{listing.dealer.businessName}</Link> : listing.seller?.publicSlug ? <Link href={`/sellers/${listing.seller.publicSlug}`} className="text-sm font-medium text-ink hover:underline">{listing.seller.name}</Link> : null}
             {isVerified && <VerifiedBadge label={isDealer ? 'Dealer' : 'ID'} />}
             {inspection && <InspectedBadge result={inspection.overallResult} />}
           </div>
@@ -179,6 +191,12 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               <WhatsAppButton listingId={listing.id} phoneNumber={sellerPhone} listingTitle={listing.title} />
             </div>
           )}
+          {listing.seller?.id && <div className="mt-3"><PlatformChatButton recipientId={listing.seller.id} listingId={listing.id} /></div>}
+          <div className="mt-4"><ReportButton targetType="listing" targetId={listing.id} /></div>
+          <div className="mt-3"><ShareButtons title={listing.title} /></div>
+          <div className="mt-3">
+             <ComparisonButton listingId={listing.id} />
+          </div>
         </div>
 
         <a

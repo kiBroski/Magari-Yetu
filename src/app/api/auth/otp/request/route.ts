@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { getPayload } from '@/lib/payload'
 import { sendSms } from '@/lib/sms'
+import { clientKey, rateLimit, rateLimitedResponse } from '@/lib/security'
 
 // Step 1 of phone-first login. Kenya is overwhelmingly phone-first, and
 // Payload's built-in auth is email+password only — this and ./verify are a
@@ -17,6 +18,8 @@ function hashCode(code: string) {
 const OTP_TTL_MS = 5 * 60 * 1000
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(clientKey(req, 'otp-request'), 5, 60 * 60 * 1000)
+  if (!limited.allowed) return rateLimitedResponse(limited.retryAfter)
   if (!process.env.OTP_HASH_SECRET) {
     return NextResponse.json({ error: 'Phone login is temporarily unavailable.' }, { status: 503 })
   }

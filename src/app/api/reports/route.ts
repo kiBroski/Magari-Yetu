@@ -1,0 +1,5 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getPayload } from '@/lib/payload'
+import { getCurrentUser } from '@/lib/auth'
+import { clientKey, rateLimit, rateLimitedResponse, verifyTurnstile } from '@/lib/security'
+export async function POST(req: NextRequest) { const limited = rateLimit(clientKey(req, 'report'), 5, 60 * 60 * 1000); if (!limited.allowed) return rateLimitedResponse(limited.retryAfter); const body = await req.json().catch(() => null); if (!body?.targetType || !body?.targetId || !body?.reason) return NextResponse.json({ error: 'Missing report details' }, { status: 400 }); if (!await verifyTurnstile(body.captchaToken, req)) return NextResponse.json({ error: 'Please complete the anti-abuse check.' }, { status: 403 }); const payload = await getPayload(); const user = await getCurrentUser(); const report = await payload.create({ collection: 'reports', data: { ...body, reporter: user?.id } as any, overrideAccess: true }); return NextResponse.json({ id: report.id }, { status: 201 }) }

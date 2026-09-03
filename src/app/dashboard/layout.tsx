@@ -6,7 +6,11 @@ import { getCurrentUser } from '@/lib/auth'
 const NAV = [
   { href: '/dashboard', label: 'Overview' },
   { href: '/dashboard/listings', label: 'My listings' },
+  { href: '/dashboard/saved', label: 'Saved vehicles' },
+  { href: '/dashboard/saved-searches', label: 'Saved searches & alerts' },
   { href: '/dashboard/billing', label: 'Billing' },
+  { href: '/dashboard/whatsapp', label: 'WhatsApp drafts' },
+  { href: '/dashboard/moderation', label: 'Moderation' },
 ]
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {

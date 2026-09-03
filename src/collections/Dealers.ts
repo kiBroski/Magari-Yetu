@@ -38,6 +38,10 @@ export const Dealers: CollectionConfig = {
     },
     { name: 'town', type: 'text' },
     { name: 'physicalAddress', type: 'text' },
+    { name: 'latitude', type: 'number', min: -5, max: 6 },
+    { name: 'longitude', type: 'number', min: 33, max: 43 },
+    { name: 'verificationExpiresAt', type: 'date', admin: { position: 'sidebar' }, access: { update: ({ req: { user } }) => ['admin', 'moderator'].includes(user?.role ?? '') } },
+    { name: 'verificationNote', type: 'textarea', admin: { position: 'sidebar' }, access: { update: ({ req: { user } }) => ['admin', 'moderator'].includes(user?.role ?? '') } },
     { name: 'contactPhone', type: 'text', required: true },
     { name: 'whatsappNumber', type: 'text' },
     {
@@ -70,7 +74,8 @@ export const Dealers: CollectionConfig = {
       admin: { description: 'Business permit, KRA PIN certificate, ID of the owner/director. Reviewed manually before verificationStatus flips to "verified".' },
       fields: [
         { name: 'label', type: 'text', required: true },
-        { name: 'file', type: 'upload', relationTo: 'media', required: true },
+        // KYC evidence must never use the public listing-media collection.
+        { name: 'file', type: 'upload', relationTo: 'verification-documents', required: true },
       ],
     },
     {

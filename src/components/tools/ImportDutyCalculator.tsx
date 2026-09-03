@@ -13,7 +13,26 @@ interface CrspItem {
   verified?: boolean
 }
 
-export const ImportDutyCalculator: React.FC = () => {
+export interface SelectedCrspVehicle {
+  id: string | number
+  make: string
+  model: string
+  variant?: string | null
+  category: string
+  crspValueKes: number
+  engineCc?: number | null
+  fuelType?: string | null
+}
+
+interface ImportDutyCalculatorProps {
+  selectedCrsp?: SelectedCrspVehicle | null
+  hideCrspLookup?: boolean
+}
+
+const DUTY_CATEGORIES: Category[] = ['car', 'motorcycle', 'tractor', 'heavy-machinery', 'pickup-van', 'truck', 'bus', 'trailer', 'tuk-tuk', 'spare-parts']
+const FUEL_TYPES: FuelType[] = ['petrol', 'diesel', 'hybrid', 'electric']
+
+export const ImportDutyCalculator: React.FC<ImportDutyCalculatorProps> = ({ selectedCrsp, hideCrspLookup = false }) => {
   const currentYear = new Date().getFullYear()
 
   // Input states
@@ -26,6 +45,25 @@ export const ImportDutyCalculator: React.FC = () => {
   const [engineCc, setEngineCc] = useState<number>(1800)
   const [fuelType, setFuelType] = useState<FuelType>('petrol')
   const [category, setCategory] = useState<Category>('car')
+
+  // A CRSP selection is the authoritative reference for this calculation.
+  // Keep manual inputs available so users can adjust a vehicle's actual age
+  // or specification, but never leave the calculator on the placeholder value.
+  useEffect(() => {
+    if (!selectedCrsp) return
+
+    setSelectedCrspId(String(selectedCrsp.id))
+    setCustomCrsp(selectedCrsp.crspValueKes)
+    if (DUTY_CATEGORIES.includes(selectedCrsp.category as Category)) {
+      setCategory(selectedCrsp.category as Category)
+    }
+    if (selectedCrsp.engineCc && selectedCrsp.engineCc > 0) {
+      setEngineCc(selectedCrsp.engineCc)
+    }
+    if (selectedCrsp.fuelType && FUEL_TYPES.includes(selectedCrsp.fuelType as FuelType)) {
+      setFuelType(selectedCrsp.fuelType as FuelType)
+    }
+  }, [selectedCrsp])
 
   // Search the CRSP database server-side so the browser never loads thousands
   // of vehicle options into a single select element.
@@ -75,7 +113,7 @@ export const ImportDutyCalculator: React.FC = () => {
       <h2 className="text-xl font-bold text-gray-900 mb-4">KRA Vehicle Import Duty Calculator</h2>
 
       {/* Searchable database lookup */}
-      <div className="mb-5">
+      {!hideCrspLookup && <div className="mb-5">
         <label className="block text-sm font-semibold text-gray-700 mb-1">
           Search Vehicle (CRSP Database):
         </label>
@@ -98,7 +136,14 @@ export const ImportDutyCalculator: React.FC = () => {
             </option>
           ))}
         </select>
-      </div>
+      </div>}
+
+      {selectedCrsp && (
+        <div className="mb-5 rounded-lg border border-stamp/30 bg-stamp/5 px-4 py-3 text-sm text-ink">
+          Using the CRSP reference for <strong>{selectedCrsp.make} {selectedCrsp.model}{selectedCrsp.variant ? ` ${selectedCrsp.variant}` : ''}</strong>:
+          {' '}<strong>KES {selectedCrsp.crspValueKes.toLocaleString()}</strong>.
+        </div>
+      )}
 
       {/* Manual Input Controls */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">

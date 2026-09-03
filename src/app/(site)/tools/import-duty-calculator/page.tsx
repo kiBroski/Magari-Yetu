@@ -1,22 +1,138 @@
-import type { Metadata } from 'next'
+﻿'use client'
+
+import { useState } from 'react'
+import CrspSearch from '@/components/crsp/CrspSearch'
 import { ImportDutyCalculator } from '@/components/tools/ImportDutyCalculator'
 
-export const metadata: Metadata = {
-  title: 'Import Duty Calculator',
-  description: 'Estimate KRA import duty, excise, VAT, IDF and RDL for a used vehicle import into Kenya, based on CRSP and age depreciation.',
+type CrspRecord = {
+  id: number
+  make: string
+  model: string
+  modelNumber: string | null
+  variant: string | null
+  transmission: string | null
+  driveConfiguration: string | null
+  engineCc: number | null
+  bodyType: string | null
+  gvwKg: number | null
+  seatingCapacity: number | null
+  fuelType: string | null
+  category: string
+  crspValueKes: number
+  verified: boolean
+  sourceNote: string | null
+  updatedAt: string
+  createdAt: string
 }
-
 export default function ImportDutyCalculatorPage() {
+  const [selectedCrsp, setSelectedCrsp] = useState<CrspRecord | null>(null)
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-bold text-ink">Import duty calculator</h1>
-        <p className="mt-1 max-w-2xl text-ink-400">
-          KRA taxes an imported used vehicle on its official CRSP value minus age-based depreciation — not on what you paid for it.
-          This runs that same calculation so you know roughly what to budget before you commit to a unit.
-        </p>
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="space-y-8">
+        <header>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Kenya Import Duty Calculator
+          </h1>
+
+          <p className="mt-2 max-w-3xl text-gray-600 dark:text-gray-400">
+            Search the KRA CRSP schedule, select your vehicle, and use the
+            official CRSP value as the customs reference value.
+          </p>
+        </header>
+
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold">
+              Find your vehicle
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Search by make, model, or vehicle name.
+            </p>
+          </div>
+
+          <CrspSearch
+            initialLimit={10}
+            showFilters
+            onSelect={(record) => {
+              setSelectedCrsp(record)
+            }}
+          />
+        </section>
+
+        {selectedCrsp && (
+          <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Selected vehicle
+                </p>
+
+                <h2 className="mt-1 text-xl font-bold">
+                  {selectedCrsp.make} {selectedCrsp.model}
+                </h2>
+
+                {selectedCrsp.variant && (
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    {selectedCrsp.variant}
+                  </p>
+                )}
+              </div>
+
+              <div className="sm:text-right">
+                <p className="text-xs text-gray-500">
+                  KRA CRSP value
+                </p>
+
+                <p className="text-2xl font-bold">
+                  {new Intl.NumberFormat('en-KE', {
+                    style: 'currency',
+                    currency: 'KES',
+                    maximumFractionDigits: 0,
+                  }).format(selectedCrsp.crspValueKes)}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+              <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+                <p className="text-xs text-gray-500">Category</p>
+                <p className="mt-1 font-medium">
+                  {selectedCrsp.category}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+                <p className="text-xs text-gray-500">Verification</p>
+                <p className="mt-1 font-medium">
+                  {selectedCrsp.verified ? 'Verified' : 'Unverified'}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+                <p className="text-xs text-gray-500">CRSP record ID</p>
+                <p className="mt-1 font-medium">
+                  #{selectedCrsp.id}
+                </p>
+              </div>
+            </div>
+
+            {selectedCrsp.sourceNote && (
+              <p className="mt-4 text-xs text-gray-500">
+                {selectedCrsp.sourceNote}
+              </p>
+            )}
+          </section>
+        )}
+
+        <section>
+          <ImportDutyCalculator
+            selectedCrsp={selectedCrsp}
+            hideCrspLookup
+          />
+        </section>
       </div>
-      <ImportDutyCalculator />
-    </div>
+    </main>
   )
 }

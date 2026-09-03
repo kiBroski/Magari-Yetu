@@ -40,9 +40,15 @@ export const CrspSchedule: CollectionConfig = {
   fields: [
     { name: 'make', type: 'text', required: true, index: true },
     { name: 'model', type: 'text', required: true, index: true },
+    { name: 'modelNumber', type: 'text', admin: { description: 'KRA model number, where supplied in the source schedule.' } },
     { name: 'variant', type: 'text', admin: { description: 'Trim/spec descriptor, e.g. "G Package", "TX-L", "2.0G" — KRA\'s real list is trim-specific, not just make+model.' } },
+    { name: 'transmission', type: 'text' },
+    { name: 'driveConfiguration', type: 'text', admin: { description: 'For example 2WD, 4WD, AWD, FWD or RWD.' } },
     { name: 'engineCc', type: 'number' },
     { name: 'fuelType', type: 'select', options: ['petrol', 'diesel', 'hybrid', 'electric'].map((v) => ({ label: v, value: v })) },
+    { name: 'bodyType', type: 'text' },
+    { name: 'gvwKg', type: 'number', admin: { description: 'Gross vehicle weight in kilograms.' } },
+    { name: 'seatingCapacity', type: 'number' },
     {
       name: 'category',
       type: 'select',

@@ -1,0 +1,3 @@
+'use client'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+export function NearbyButton() { const router = useRouter(); const pathname = usePathname(); const params = useSearchParams(); function find() { if (!navigator.geolocation) return; navigator.geolocation.getCurrentPosition(({ coords }) => { const next = new URLSearchParams(params.toString()); next.set('lat', String(coords.latitude)); next.set('lng', String(coords.longitude)); next.set('radius', '25'); router.push(`${pathname}?${next}`) }) } return <button type="button" onClick={find} className="rounded border border-ink-100 px-4 py-2 text-sm text-ink hover:bg-ink-50">Use my location</button> }

@@ -1,0 +1,3 @@
+'use client'
+import { useState } from 'react'
+export function ModerationProviderActions({ id }: { id: string }) { const [done, setDone] = useState(false); async function set(verificationStatus: string) { const r = await fetch(`/api/moderation/service-providers/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ verificationStatus }) }); if (r.ok) setDone(true) } return done ? <span className="text-sm text-matatu">Updated</span> : <span className="flex gap-2"><button onClick={() => set('verified')} className="rounded bg-matatu px-3 py-1 text-xs text-white">Verify</button><button onClick={() => set('rejected')} className="rounded border border-alert px-3 py-1 text-xs text-alert">Reject</button></span> }

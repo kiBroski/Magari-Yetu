@@ -69,7 +69,20 @@ export interface Config {
   collections: {
     users: User;
     dealers: Dealer;
+    'service-providers': ServiceProvider;
     listings: Listing;
+    reviews: Review;
+    reports: Report;
+    'contact-messages': ContactMessage;
+    'saved-searches': SavedSearch;
+    notifications: Notification;
+    'audit-logs': AuditLog;
+    'verification-documents': VerificationDocument;
+    conversations: Conversation;
+    messages: Message;
+    'whatsapp-submissions': WhatsappSubmission;
+    'whatsapp-messages': WhatsappMessage;
+    'whatsapp-media': WhatsappMedia;
     'featured-orders': FeaturedOrder;
     inquiries: Inquiry;
     media: Media;
@@ -85,7 +98,20 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     dealers: DealersSelect<false> | DealersSelect<true>;
+    'service-providers': ServiceProvidersSelect<false> | ServiceProvidersSelect<true>;
     listings: ListingsSelect<false> | ListingsSelect<true>;
+    reviews: ReviewsSelect<false> | ReviewsSelect<true>;
+    reports: ReportsSelect<false> | ReportsSelect<true>;
+    'contact-messages': ContactMessagesSelect<false> | ContactMessagesSelect<true>;
+    'saved-searches': SavedSearchesSelect<false> | SavedSearchesSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    'audit-logs': AuditLogsSelect<false> | AuditLogsSelect<true>;
+    'verification-documents': VerificationDocumentsSelect<false> | VerificationDocumentsSelect<true>;
+    conversations: ConversationsSelect<false> | ConversationsSelect<true>;
+    messages: MessagesSelect<false> | MessagesSelect<true>;
+    'whatsapp-submissions': WhatsappSubmissionsSelect<false> | WhatsappSubmissionsSelect<true>;
+    'whatsapp-messages': WhatsappMessagesSelect<false> | WhatsappMessagesSelect<true>;
+    'whatsapp-media': WhatsappMediaSelect<false> | WhatsappMediaSelect<true>;
     'featured-orders': FeaturedOrdersSelect<false> | FeaturedOrdersSelect<true>;
     inquiries: InquiriesSelect<false> | InquiriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -138,6 +164,27 @@ export interface UserAuthOperations {
 export interface User {
   id: number;
   name: string;
+  /**
+   * Automatic public profile URL: /sellers/[publicSlug].
+   */
+  publicSlug?: string | null;
+  /**
+   * Optional public seller introduction.
+   */
+  bio?: string | null;
+  /**
+   * Public website, including https://.
+   */
+  website?: string | null;
+  /**
+   * Public county for buyers looking nearby.
+   */
+  county?: string | null;
+  town?: string | null;
+  accountStatus?: ('active' | 'warned' | 'suspended' | 'banned') | null;
+  suspensionEndsAt?: string | null;
+  moderationNote?: string | null;
+  verificationExpiresAt?: string | null;
   /**
    * MSISDN in 2547XXXXXXXX format — used for M-Pesa STK push, WhatsApp contact, and phone-OTP login (find-or-create in api/auth/otp/verify relies on this being unique).
    */
@@ -251,9 +298,14 @@ export interface Listing {
   condition: 'brand-new' | 'locally-assembled' | 'foreign-used' | 'locally-used';
   make: string;
   model: string;
+  /**
+   * Manufacturer or CRSP model number.
+   */
+  modelNumber?: string | null;
   trim?: string | null;
   yearOfManufacture: number;
   transmission?: ('manual' | 'automatic' | 'cvt') | null;
+  driveConfiguration?: ('2wd' | '4wd' | 'awd' | 'fwd' | 'rwd') | null;
   fuelType?: ('petrol' | 'diesel' | 'hybrid' | 'electric') | null;
   /**
    * Engine capacity in cc (or horsepower/KW equivalent). Feeds the import duty calculator.
@@ -261,7 +313,20 @@ export interface Listing {
   engineCc?: number | null;
   mileageKm?: number | null;
   bodyType?: ('sedan' | 'suv' | 'hatchback' | 'wagon' | 'pickup' | 'van' | 'coupe' | 'convertible') | null;
+  /**
+   * Gross vehicle weight (GVW) in kilograms.
+   */
+  grossVehicleWeightKg?: number | null;
+  seatingCapacity?: number | null;
   color?: string | null;
+  /**
+   * Optional matching KRA CRSP record.
+   */
+  crspRecord?: (number | null) | CrspSchedule;
+  /**
+   * CRSP value in KES at the time this listing was created or updated.
+   */
+  crspValueKes?: number | null;
   heavyMachineSpecs?: {
     equipmentType?:
       | (
@@ -339,11 +404,24 @@ export interface Listing {
     | 'Nyeri'
     | 'Other';
   town?: string | null;
+  /**
+   * Optional approximate pin for nearby search. Do not require an individual seller’s exact home location.
+   */
+  latitude?: number | null;
+  longitude?: number | null;
   status?: ('draft' | 'pending-review' | 'active' | 'sold' | 'expired' | 'rejected') | null;
   /**
    * Auto-set by the price-outlier check on create/update. A flagged listing still goes live but is queued for a human look — this is a nudge, not a block.
    */
   moderationFlag?: ('none' | 'price-outlier-low' | 'duplicate-vin') | null;
+  riskScore?: number | null;
+  riskReasons?:
+    | {
+        reason?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  moderationNote?: string | null;
   /**
    * Set by a paid FeaturedOrder, not directly by the seller.
    */
@@ -372,6 +450,10 @@ export interface Dealer {
   county: 'Nairobi' | 'Mombasa' | 'Kiambu' | 'Nakuru' | 'Uasin Gishu' | 'Kisumu' | 'Machakos' | 'Other';
   town?: string | null;
   physicalAddress?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  verificationExpiresAt?: string | null;
+  verificationNote?: string | null;
   contactPhone: string;
   whatsappNumber?: string | null;
   dealsIn?: ('new' | 'import' | 'locally-used' | 'heavy-machinery')[] | null;
@@ -382,7 +464,7 @@ export interface Dealer {
   verificationDocs?:
     | {
         label: string;
-        file: number | Media;
+        file: number | VerificationDocument;
         id?: string | null;
       }[]
     | null;
@@ -393,6 +475,356 @@ export interface Dealer {
   subscriptionRenewsAt?: string | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "verification-documents".
+ */
+export interface VerificationDocument {
+  id: number;
+  ownerType: 'user' | 'dealer' | 'service-provider';
+  ownerId: string;
+  documentType: 'national-id' | 'business-permit' | 'kra-pin' | 'professional-certificate' | 'other';
+  status?: ('pending' | 'accepted' | 'rejected' | 'expired') | null;
+  expiresAt?: string | null;
+  reviewNote?: string | null;
+  reviewedBy?: (number | null) | User;
+  reviewedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crsp-schedule".
+ */
+export interface CrspSchedule {
+  id: number;
+  make: string;
+  model: string;
+  /**
+   * KRA model number, where supplied in the source schedule.
+   */
+  modelNumber?: string | null;
+  /**
+   * Trim/spec descriptor, e.g. "G Package", "TX-L", "2.0G" — KRA's real list is trim-specific, not just make+model.
+   */
+  variant?: string | null;
+  transmission?: string | null;
+  /**
+   * For example 2WD, 4WD, AWD, FWD or RWD.
+   */
+  driveConfiguration?: string | null;
+  engineCc?: number | null;
+  fuelType?: ('petrol' | 'diesel' | 'hybrid' | 'electric') | null;
+  bodyType?: string | null;
+  /**
+   * Gross vehicle weight in kilograms.
+   */
+  gvwKg?: number | null;
+  seatingCapacity?: number | null;
+  category:
+    | 'car'
+    | 'motorcycle'
+    | 'tractor'
+    | 'heavy-machinery'
+    | 'pickup-van'
+    | 'truck'
+    | 'bus'
+    | 'trailer'
+    | 'tuk-tuk'
+    | 'spare-parts';
+  crspValueKes: number;
+  /**
+   * True only if this figure is confirmed against an actual KRA-published source — not a general market estimate.
+   */
+  verified?: boolean | null;
+  /**
+   * Where this number came from. Required in spirit even though not enforced as required — every row should have one.
+   */
+  sourceNote?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "service-providers".
+ */
+export interface ServiceProvider {
+  id: number;
+  owner: number | User;
+  businessName: string;
+  slug: string;
+  logo?: (number | null) | Media;
+  description: string;
+  services: (
+    | 'certified-mechanic'
+    | 'auto-electrical'
+    | 'body-painting'
+    | 'tinting'
+    | 'detailing'
+    | 'identity-marking'
+    | 'inspection'
+    | 'spare-parts'
+    | 'car-hire'
+    | 'leasing'
+    | 'towing'
+  )[];
+  /**
+   * Comma-separated makes/models.
+   */
+  makesServiced?: string | null;
+  website?: string | null;
+  contactPhone: string;
+  whatsappNumber?: string | null;
+  county: string;
+  town?: string | null;
+  physicalAddress?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  verificationStatus?: ('unverified' | 'pending' | 'verified' | 'rejected' | 'expired') | null;
+  verificationExpiresAt?: string | null;
+  verificationNote?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews".
+ */
+export interface Review {
+  id: number;
+  author: number | User;
+  targetType: 'dealer' | 'service-provider' | 'seller';
+  targetId: string;
+  rating: number;
+  title: string;
+  body: string;
+  status?: ('pending' | 'published' | 'rejected') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reports".
+ */
+export interface Report {
+  id: number;
+  reporter?: (number | null) | User;
+  targetType: 'listing' | 'user' | 'dealer' | 'service-provider';
+  targetId: string;
+  reason: 'suspected-fraud' | 'advance-fee-scam' | 'misleading-listing' | 'impersonation' | 'abuse' | 'other';
+  details?: string | null;
+  status?: ('open' | 'triaged' | 'under-review' | 'actioned' | 'resolved' | 'dismissed') | null;
+  assignedTo?: (number | null) | User;
+  moderatorNote?: string | null;
+  resolution?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contact-messages".
+ */
+export interface ContactMessage {
+  id: number;
+  sender?: (number | null) | User;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  subject: string;
+  message: string;
+  status?: ('new' | 'in-progress' | 'resolved') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "saved-searches".
+ */
+export interface SavedSearch {
+  id: number;
+  user: number | User;
+  name: string;
+  /**
+   * Normalised URL query, without the leading question mark.
+   */
+  queryString: string;
+  /**
+   * Structured copy of the saved search filters.
+   */
+  filters?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  frequency: 'instant' | 'daily' | 'weekly' | 'off';
+  channels?: ('in-app' | 'email' | 'sms' | 'whatsapp')[] | null;
+  active?: boolean | null;
+  /**
+   * Updated by the alerts worker.
+   */
+  lastNotifiedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: number;
+  recipient: number | User;
+  type: 'new-listing' | 'price-drop' | 'new-verified-business' | 'wanted-response' | 'system';
+  title: string;
+  body: string;
+  href?: string | null;
+  readAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "audit-logs".
+ */
+export interface AuditLog {
+  id: number;
+  actor?: (number | null) | User;
+  action: string;
+  targetType: string;
+  targetId: string;
+  previous?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  next?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  note?: string | null;
+  ip?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversations".
+ */
+export interface Conversation {
+  id: number;
+  participants: (number | User)[];
+  listing?: (number | null) | Listing;
+  lastMessageAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "messages".
+ */
+export interface Message {
+  id: number;
+  conversation: number | Conversation;
+  sender: number | User;
+  body: string;
+  readAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "whatsapp-submissions".
+ */
+export interface WhatsappSubmission {
+  id: number;
+  fromPhone: string;
+  rawText?: string | null;
+  parsed?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  claimedBy?: (number | null) | User;
+  claimTokenUsedAt?: string | null;
+  claimExpiresAt?: string | null;
+  status?: ('received' | 'needs-details' | 'claimed' | 'under-review' | 'approved' | 'rejected' | 'converted') | null;
+  onboardingStatus?: ('unassigned' | 'assigned' | 'awaiting-dealer' | 'dealer-approved' | 'completed') | null;
+  assignedTo?: (number | null) | User;
+  followUpAt?: string | null;
+  slaDueAt?: string | null;
+  staffNotes?: string | null;
+  dealer?: (number | null) | Dealer;
+  listing?: (number | null) | Listing;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "whatsapp-messages".
+ */
+export interface WhatsappMessage {
+  id: number;
+  direction: 'inbound' | 'outbound';
+  toPhone?: string | null;
+  fromPhone?: string | null;
+  body?: string | null;
+  submission?: (number | null) | WhatsappSubmission;
+  providerMessageId?: string | null;
+  status?: ('queued' | 'sent' | 'delivered' | 'read' | 'failed') | null;
+  attempts?: number | null;
+  lastError?: string | null;
+  sentAt?: string | null;
+  deliveredAt?: string | null;
+  readAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "whatsapp-media".
+ */
+export interface WhatsappMedia {
+  id: number;
+  submission: number | WhatsappSubmission;
+  providerMediaId: string;
+  reviewStatus?: ('pending' | 'approved' | 'rejected') | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -487,43 +919,6 @@ export interface PhoneOtp {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "crsp-schedule".
- */
-export interface CrspSchedule {
-  id: number;
-  make: string;
-  model: string;
-  /**
-   * Trim/spec descriptor, e.g. "G Package", "TX-L", "2.0G" — KRA's real list is trim-specific, not just make+model.
-   */
-  variant?: string | null;
-  engineCc?: number | null;
-  fuelType?: ('petrol' | 'diesel' | 'hybrid' | 'electric') | null;
-  category:
-    | 'car'
-    | 'motorcycle'
-    | 'tractor'
-    | 'heavy-machinery'
-    | 'pickup-van'
-    | 'truck'
-    | 'bus'
-    | 'trailer'
-    | 'tuk-tuk'
-    | 'spare-parts';
-  crspValueKes: number;
-  /**
-   * True only if this figure is confirmed against an actual KRA-published source — not a general market estimate.
-   */
-  verified?: boolean | null;
-  /**
-   * Where this number came from. Required in spirit even though not enforced as required — every row should have one.
-   */
-  sourceNote?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -555,8 +950,60 @@ export interface PayloadLockedDocument {
         value: number | Dealer;
       } | null)
     | ({
+        relationTo: 'service-providers';
+        value: number | ServiceProvider;
+      } | null)
+    | ({
         relationTo: 'listings';
         value: number | Listing;
+      } | null)
+    | ({
+        relationTo: 'reviews';
+        value: number | Review;
+      } | null)
+    | ({
+        relationTo: 'reports';
+        value: number | Report;
+      } | null)
+    | ({
+        relationTo: 'contact-messages';
+        value: number | ContactMessage;
+      } | null)
+    | ({
+        relationTo: 'saved-searches';
+        value: number | SavedSearch;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: number | Notification;
+      } | null)
+    | ({
+        relationTo: 'audit-logs';
+        value: number | AuditLog;
+      } | null)
+    | ({
+        relationTo: 'verification-documents';
+        value: number | VerificationDocument;
+      } | null)
+    | ({
+        relationTo: 'conversations';
+        value: number | Conversation;
+      } | null)
+    | ({
+        relationTo: 'messages';
+        value: number | Message;
+      } | null)
+    | ({
+        relationTo: 'whatsapp-submissions';
+        value: number | WhatsappSubmission;
+      } | null)
+    | ({
+        relationTo: 'whatsapp-messages';
+        value: number | WhatsappMessage;
+      } | null)
+    | ({
+        relationTo: 'whatsapp-media';
+        value: number | WhatsappMedia;
       } | null)
     | ({
         relationTo: 'featured-orders';
@@ -630,6 +1077,15 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  publicSlug?: T;
+  bio?: T;
+  website?: T;
+  county?: T;
+  town?: T;
+  accountStatus?: T;
+  suspensionEndsAt?: T;
+  moderationNote?: T;
+  verificationExpiresAt?: T;
   phone?: T;
   whatsappOptIn?: T;
   role?: T;
@@ -670,6 +1126,10 @@ export interface DealersSelect<T extends boolean = true> {
   county?: T;
   town?: T;
   physicalAddress?: T;
+  latitude?: T;
+  longitude?: T;
+  verificationExpiresAt?: T;
+  verificationNote?: T;
   contactPhone?: T;
   whatsappNumber?: T;
   dealsIn?: T;
@@ -688,6 +1148,32 @@ export interface DealersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "service-providers_select".
+ */
+export interface ServiceProvidersSelect<T extends boolean = true> {
+  owner?: T;
+  businessName?: T;
+  slug?: T;
+  logo?: T;
+  description?: T;
+  services?: T;
+  makesServiced?: T;
+  website?: T;
+  contactPhone?: T;
+  whatsappNumber?: T;
+  county?: T;
+  town?: T;
+  physicalAddress?: T;
+  latitude?: T;
+  longitude?: T;
+  verificationStatus?: T;
+  verificationExpiresAt?: T;
+  verificationNote?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "listings_select".
  */
 export interface ListingsSelect<T extends boolean = true> {
@@ -699,14 +1185,20 @@ export interface ListingsSelect<T extends boolean = true> {
   condition?: T;
   make?: T;
   model?: T;
+  modelNumber?: T;
   trim?: T;
   yearOfManufacture?: T;
   transmission?: T;
+  driveConfiguration?: T;
   fuelType?: T;
   engineCc?: T;
   mileageKm?: T;
   bodyType?: T;
+  grossVehicleWeightKg?: T;
+  seatingCapacity?: T;
   color?: T;
+  crspRecord?: T;
+  crspValueKes?: T;
   heavyMachineSpecs?:
     | T
     | {
@@ -738,14 +1230,227 @@ export interface ListingsSelect<T extends boolean = true> {
   videoUrl?: T;
   county?: T;
   town?: T;
+  latitude?: T;
+  longitude?: T;
   status?: T;
   moderationFlag?: T;
+  riskScore?: T;
+  riskReasons?:
+    | T
+    | {
+        reason?: T;
+        id?: T;
+      };
+  moderationNote?: T;
   featured?: T;
   featuredUntil?: T;
   views?: T;
   inquiryCount?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews_select".
+ */
+export interface ReviewsSelect<T extends boolean = true> {
+  author?: T;
+  targetType?: T;
+  targetId?: T;
+  rating?: T;
+  title?: T;
+  body?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reports_select".
+ */
+export interface ReportsSelect<T extends boolean = true> {
+  reporter?: T;
+  targetType?: T;
+  targetId?: T;
+  reason?: T;
+  details?: T;
+  status?: T;
+  assignedTo?: T;
+  moderatorNote?: T;
+  resolution?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contact-messages_select".
+ */
+export interface ContactMessagesSelect<T extends boolean = true> {
+  sender?: T;
+  name?: T;
+  email?: T;
+  phone?: T;
+  subject?: T;
+  message?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "saved-searches_select".
+ */
+export interface SavedSearchesSelect<T extends boolean = true> {
+  user?: T;
+  name?: T;
+  queryString?: T;
+  filters?: T;
+  frequency?: T;
+  channels?: T;
+  active?: T;
+  lastNotifiedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  recipient?: T;
+  type?: T;
+  title?: T;
+  body?: T;
+  href?: T;
+  readAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "audit-logs_select".
+ */
+export interface AuditLogsSelect<T extends boolean = true> {
+  actor?: T;
+  action?: T;
+  targetType?: T;
+  targetId?: T;
+  previous?: T;
+  next?: T;
+  note?: T;
+  ip?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "verification-documents_select".
+ */
+export interface VerificationDocumentsSelect<T extends boolean = true> {
+  ownerType?: T;
+  ownerId?: T;
+  documentType?: T;
+  status?: T;
+  expiresAt?: T;
+  reviewNote?: T;
+  reviewedBy?: T;
+  reviewedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversations_select".
+ */
+export interface ConversationsSelect<T extends boolean = true> {
+  participants?: T;
+  listing?: T;
+  lastMessageAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "messages_select".
+ */
+export interface MessagesSelect<T extends boolean = true> {
+  conversation?: T;
+  sender?: T;
+  body?: T;
+  readAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "whatsapp-submissions_select".
+ */
+export interface WhatsappSubmissionsSelect<T extends boolean = true> {
+  fromPhone?: T;
+  rawText?: T;
+  parsed?: T;
+  claimedBy?: T;
+  claimTokenUsedAt?: T;
+  claimExpiresAt?: T;
+  status?: T;
+  onboardingStatus?: T;
+  assignedTo?: T;
+  followUpAt?: T;
+  slaDueAt?: T;
+  staffNotes?: T;
+  dealer?: T;
+  listing?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "whatsapp-messages_select".
+ */
+export interface WhatsappMessagesSelect<T extends boolean = true> {
+  direction?: T;
+  toPhone?: T;
+  fromPhone?: T;
+  body?: T;
+  submission?: T;
+  providerMessageId?: T;
+  status?: T;
+  attempts?: T;
+  lastError?: T;
+  sentAt?: T;
+  deliveredAt?: T;
+  readAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "whatsapp-media_select".
+ */
+export interface WhatsappMediaSelect<T extends boolean = true> {
+  submission?: T;
+  providerMediaId?: T;
+  reviewStatus?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -876,9 +1581,15 @@ export interface PhoneOtpsSelect<T extends boolean = true> {
 export interface CrspScheduleSelect<T extends boolean = true> {
   make?: T;
   model?: T;
+  modelNumber?: T;
   variant?: T;
+  transmission?: T;
+  driveConfiguration?: T;
   engineCc?: T;
   fuelType?: T;
+  bodyType?: T;
+  gvwKg?: T;
+  seatingCapacity?: T;
   category?: T;
   crspValueKes?: T;
   verified?: T;

@@ -16,10 +16,10 @@ export const Users: CollectionConfig = {
     // through manual document verification on the Dealers collection before
     // their storefront badge lights up — auth identity and trust are
     // deliberately decoupled.
-    tokenExpiration: 60 * 60 * 24 * 14, // 14 days
+    tokenExpiration: 60 * 60 * 24 * 7,
     verify: true,
-    maxLoginAttempts: 8,
-    lockTime: 10 * 60 * 1000,
+    maxLoginAttempts: 5,
+    lockTime: 30 * 60 * 1000,
   },
   admin: {
     useAsTitle: 'email',
@@ -44,6 +44,15 @@ export const Users: CollectionConfig = {
   },
   fields: [
     { name: 'name', type: 'text', required: true },
+    { name: 'publicSlug', type: 'text', unique: true, index: true, admin: { description: 'Automatic public profile URL: /sellers/[publicSlug].' } },
+    { name: 'bio', type: 'textarea', admin: { description: 'Optional public seller introduction.' } },
+    { name: 'website', type: 'text', admin: { description: 'Public website, including https://.' } },
+    { name: 'county', type: 'text', admin: { description: 'Public county for buyers looking nearby.' } },
+    { name: 'town', type: 'text' },
+    { name: 'accountStatus', type: 'select', defaultValue: 'active', options: ['active', 'warned', 'suspended', 'banned'].map(value => ({ value, label: value })), access: { update: ({ req: { user } }) => ['admin', 'moderator'].includes(user?.role ?? '') } },
+    { name: 'suspensionEndsAt', type: 'date', access: { update: ({ req: { user } }) => ['admin', 'moderator'].includes(user?.role ?? '') } },
+    { name: 'moderationNote', type: 'textarea', access: { update: ({ req: { user } }) => ['admin', 'moderator'].includes(user?.role ?? '') } },
+    { name: 'verificationExpiresAt', type: 'date', access: { update: ({ req: { user } }) => ['admin', 'moderator'].includes(user?.role ?? '') } },
     {
       name: 'phone',
       type: 'text',
@@ -116,8 +125,16 @@ export const Users: CollectionConfig = {
           data.role = 'buyer'
           data.idVerified = false
         }
+        if (data?.name && !data.publicSlug) {
+          data.publicSlug = `${data.name}-${Math.random().toString(36).slice(2, 7)}`
+            .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+        }
         return data
       },
     ],
+    beforeLogin: [({ user }) => {
+      if (['suspended', 'banned'].includes(user.accountStatus) && (!user.suspensionEndsAt || new Date(user.suspensionEndsAt) > new Date())) throw new Error('This account is unavailable. Contact support if you believe this is an error.')
+      return user
+    }],
   },
 }

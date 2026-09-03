@@ -1,0 +1,5 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getPayload } from '@/lib/payload'
+import { getCurrentUser } from '@/lib/auth'
+import { clientKey, rateLimit, rateLimitedResponse, verifyTurnstile } from '@/lib/security'
+export async function POST(req: NextRequest) { const limited = rateLimit(clientKey(req, 'contact'), 5, 60 * 60 * 1000); if (!limited.allowed) return rateLimitedResponse(limited.retryAfter); const body = await req.json().catch(() => null); if (!body?.name || !body?.subject || !body?.message) return NextResponse.json({ error: 'Complete all required fields' }, { status: 400 }); if (!await verifyTurnstile(body.captchaToken, req)) return NextResponse.json({ error: 'Please complete the anti-abuse check.' }, { status: 403 }); const user = await getCurrentUser(); const message = await (await getPayload()).create({ collection: 'contact-messages', data: { ...body, sender: user?.id } as any, overrideAccess: true }); return NextResponse.json({ id: message.id }, { status: 201 }) }

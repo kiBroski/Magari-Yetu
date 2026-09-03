@@ -53,6 +53,7 @@ export function SearchFilters() {
 
   return (
     <form className="grid grid-cols-2 gap-3 rounded-lg border border-ink-100 bg-white p-4 sm:grid-cols-3 lg:grid-cols-7" role="search" aria-label="Filter listings">
+      <input type="search" placeholder="Search make, model or part" defaultValue={searchParams.get('q') ?? ''} onBlur={(e) => setParam('q', e.target.value)} className="col-span-2 rounded border border-ink-100 bg-white px-3 py-2 text-sm" aria-label="Search listings" />
       <select
         className="col-span-2 rounded border border-ink-100 bg-white px-3 py-2 text-sm sm:col-span-1"
         defaultValue={searchParams.get('category') ?? ''}

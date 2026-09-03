@@ -4,6 +4,7 @@ import { getPayload } from '@/lib/payload'
 import { SearchFilters } from '@/components/listings/SearchFilters'
 import { CarCard } from '@/components/listings/CarCard'
 import type { ListingCardData } from '@/types/listing'
+import { SaveSearchButton } from '@/components/listings/SaveSearchButton'
 
 interface SearchParams {
   category?: string | string[]
@@ -13,6 +14,7 @@ interface SearchParams {
   minPrice?: string | string[]
   maxPrice?: string | string[]
   dutyStatus?: string | string[]
+  q?: string | string[]
   page?: string | string[]
 }
 
@@ -36,6 +38,7 @@ function buildWhere(params: SearchParams, forcedCategory?: string): Where {
   const minPrice = firstParam(params.minPrice)
   const maxPrice = firstParam(params.maxPrice)
   const dutyStatus = firstParam(params.dutyStatus)
+  const q = firstParam(params.q)
 
   if (category) and.push({ category: { equals: category } })
   if (condition) and.push({ condition: { equals: condition } })
@@ -44,6 +47,7 @@ function buildWhere(params: SearchParams, forcedCategory?: string): Where {
   if (minPrice) and.push({ price: { greater_than_equal: Number(minPrice) } })
   if (maxPrice) and.push({ price: { less_than_equal: Number(maxPrice) } })
   if (dutyStatus) and.push({ dutyStatus: { equals: dutyStatus } })
+  if (q) and.push({ or: [{ title: { contains: q } }, { make: { contains: q } }, { model: { contains: q } }, { 'sparePartDetails.partType': { contains: q } }, { 'sparePartDetails.compatibleModels': { contains: q } }] })
 
   return { and }
 }
@@ -98,7 +102,12 @@ export async function ListingsView({ forcedCategory, searchParams, title, descri
           {description && <p className="mt-1 text-ink-400">{description}</p>}
         </div>
       )}
-      <SearchFilters />
+      <div className="space-y-3">
+        <SearchFilters />
+        <div className="flex justify-end">
+          <SaveSearchButton />
+        </div>
+      </div>
       <p className="text-sm text-ink-400">{totalDocs} listing{totalDocs === 1 ? '' : 's'} found</p>
 
       {listings.length === 0 ? (

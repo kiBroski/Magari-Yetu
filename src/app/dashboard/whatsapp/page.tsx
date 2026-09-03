@@ -1,0 +1,2 @@
+import { WhatsAppDrafts } from '@/components/dashboard/WhatsAppDrafts'
+export default function WhatsAppDraftsPage() { return <div><h2 className="font-display text-xl font-bold text-ink">WhatsApp listing drafts</h2><p className="mt-1 text-sm text-ink-400">Claim messages sent from your registered WhatsApp number, then finish the listing safely on Magariyetu.</p><div className="mt-5"><WhatsAppDrafts /></div></div> }

@@ -1,0 +1,4 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getPayload } from '@/lib/payload'
+import { getCurrentUser } from '@/lib/auth'
+export async function POST(req: NextRequest) { const user = await getCurrentUser(); const body = await req.json().catch(() => null); if (!user) return NextResponse.json({ error: 'Sign in required' }, { status: 401 }); if (!body?.businessName || !body?.description || !body?.contactPhone || !body?.county || !Array.isArray(body.services) || !body.services.length) return NextResponse.json({ error: 'Complete all required fields' }, { status: 400 }); const provider = await (await getPayload()).create({ collection: 'service-providers', data: { ...body, owner: user.id, verificationStatus: 'pending' } as any, overrideAccess: true }); return NextResponse.json({ id: provider.id, slug: provider.slug }, { status: 201 }) }

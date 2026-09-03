@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { SellWizard } from '@/components/listings/SellWizard'
 
 export const metadata: Metadata = {
@@ -13,7 +14,10 @@ export default function SellPage() {
         <h1 className="font-display text-3xl font-bold text-ink">List it in a few steps</h1>
         <p className="mt-1 text-ink-400">No account needed until you're ready to publish.</p>
       </div>
-      <SellWizard />
+
+      <Suspense fallback={<div className="mx-auto max-w-2xl">Loading...</div>}>
+        <SellWizard />
+      </Suspense>
     </div>
   )
 }

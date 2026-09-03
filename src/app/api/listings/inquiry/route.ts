@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from '@/lib/payload'
 import { getCurrentUser } from '@/lib/auth'
+import { clientKey, rateLimit, rateLimitedResponse } from '@/lib/security'
 
 // A dedicated route (rather than pointing WhatsAppButton straight at
 // Payload's own /api/inquiries) exists so lead-capture gets basic
@@ -8,6 +9,8 @@ import { getCurrentUser } from '@/lib/auth'
 // without complicating the Inquiries collection's own access rules. Uses
 // the Local API (trusted server context), not the REST API.
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(clientKey(req, 'inquiry'), 20, 60 * 60 * 1000)
+  if (!limited.allowed) return rateLimitedResponse(limited.retryAfter)
   const body = await req.json().catch(() => null)
   if (!body?.listing || !body?.channel) {
     return NextResponse.json({ error: 'listing and channel are required' }, { status: 400 })

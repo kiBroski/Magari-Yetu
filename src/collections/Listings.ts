@@ -1,4 +1,5 @@
 import type { CollectionConfig, Where } from 'payload'
+import { safetySignals } from '@/lib/security'
 
 // The core of the marketplace. One document = one vehicle or machine for
 // sale. Deliberately one collection (not separate "Cars" / "Trucks" /
@@ -81,6 +82,7 @@ export const Listings: CollectionConfig = {
     // --- Standard vehicle fields (hidden when category is heavy-machinery, tractor, trailer, or spare-parts) ---
     { name: 'make', type: 'text', required: true, index: true },
     { name: 'model', type: 'text', required: true, index: true },
+    { name: 'modelNumber', type: 'text', admin: { description: 'Manufacturer or CRSP model number.' } },
     { name: 'trim', type: 'text' },
     { name: 'yearOfManufacture', type: 'number', required: true, min: 1980, max: 2027, index: true },
     {
@@ -88,6 +90,12 @@ export const Listings: CollectionConfig = {
       type: 'select',
       admin: { condition: (data) => !['heavy-machinery', 'tractor', 'trailer', 'spare-parts'].includes(data?.category) },
       options: ['Manual', 'Automatic', 'CVT'].map((v) => ({ label: v, value: v.toLowerCase() })),
+    },
+    {
+      name: 'driveConfiguration',
+      type: 'select',
+      admin: { condition: (data) => !['heavy-machinery', 'tractor', 'trailer', 'spare-parts'].includes(data?.category) },
+      options: ['2WD', '4WD', 'AWD', 'FWD', 'RWD'].map((v) => ({ label: v, value: v.toLowerCase() })),
     },
     {
       name: 'fuelType',
@@ -115,7 +123,15 @@ export const Listings: CollectionConfig = {
       admin: { condition: (data) => ['car', 'pickup-van'].includes(data?.category) },
       options: ['Sedan', 'SUV', 'Hatchback', 'Wagon', 'Pickup', 'Van', 'Coupe', 'Convertible'].map((v) => ({ label: v, value: v.toLowerCase() })),
     },
+    { name: 'grossVehicleWeightKg', type: 'number', admin: { description: 'Gross vehicle weight (GVW) in kilograms.' } },
+    { name: 'seatingCapacity', type: 'number', min: 1, max: 100 },
     { name: 'color', type: 'text' },
+
+    // Retain both the CRSP source record and the value used for this listing.
+    // The snapshot preserves the historical advertised reference even if KRA
+    // later revises its schedule or the source record is corrected.
+    { name: 'crspRecord', type: 'relationship', relationTo: 'crsp-schedule', index: true, admin: { description: 'Optional matching KRA CRSP record.' } },
+    { name: 'crspValueKes', type: 'number', index: true, admin: { description: 'CRSP value in KES at the time this listing was created or updated.' } },
 
     // --- Heavy machinery & agricultural fields (shown when category === 'heavy-machinery' or 'tractor') ---
     {
@@ -195,6 +211,8 @@ export const Listings: CollectionConfig = {
 
     { name: 'county', type: 'select', required: true, options: KENYAN_COUNTIES.map((c) => ({ label: c, value: c })) },
     { name: 'town', type: 'text' },
+    { name: 'latitude', type: 'number', min: -5, max: 6, admin: { description: 'Optional approximate pin for nearby search. Do not require an individual seller’s exact home location.' } },
+    { name: 'longitude', type: 'number', min: 33, max: 43 },
 
     {
       name: 'status',
@@ -223,6 +241,9 @@ export const Listings: CollectionConfig = {
       ],
       defaultValue: 'none',
     },
+    { name: 'riskScore', type: 'number', defaultValue: 0, admin: { position: 'sidebar', readOnly: true } },
+    { name: 'riskReasons', type: 'array', admin: { position: 'sidebar', readOnly: true }, fields: [{ name: 'reason', type: 'text' }] },
+    { name: 'moderationNote', type: 'textarea', admin: { position: 'sidebar' }, access: { update: ({ req: { user } }) => ['admin', 'moderator'].includes(user?.role ?? '') } },
 
     { name: 'featured', type: 'checkbox', defaultValue: false, index: true, admin: { position: 'sidebar', description: 'Set by a paid FeaturedOrder, not directly by the seller.' } },
     { name: 'featuredUntil', type: 'date', admin: { position: 'sidebar' } },
@@ -288,6 +309,29 @@ export const Listings: CollectionConfig = {
         if (data.price < median * 0.6) {
           data.moderationFlag = 'price-outlier-low'
         }
+        return data
+      },
+      async ({ data, operation, originalDoc, req }) => {
+        const text = [data?.title, data?.description, data?.videoUrl].filter(Boolean).join(' ')
+        const signals = safetySignals(text)
+        const reasons = signals.matches.map((value) => ({ reason: `Suspicious content pattern: ${value}` }))
+        let score = signals.score
+        const vin = String(data?.vinOrChassis || '').replace(/\s/g, '').toUpperCase()
+        if (vin.length >= 8) {
+          const matches = await req.payload.find({ collection: 'listings', where: { vinOrChassis: { equals: vin } }, limit: 5, overrideAccess: true })
+          const duplicates = matches.docs.filter((doc: any) => doc.id !== originalDoc?.id)
+          if (duplicates.length) {
+            data.moderationFlag = 'duplicate-vin'
+            reasons.push({ reason: 'Duplicate VIN/chassis found on another listing' })
+            score += 60
+          }
+          data.vinOrChassis = vin
+        }
+        if (reasons.length) {
+          data.riskScore = Math.min(100, score)
+          data.riskReasons = reasons
+        }
+        if (operation === 'create' && score >= 60) data.status = 'pending-review'
         return data
       },
     ],

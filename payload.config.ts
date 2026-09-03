@@ -16,6 +16,19 @@ import { Media } from './src/collections/Media'
 import { Inspections } from './src/collections/Inspections'
 import { PhoneOtps } from './src/collections/PhoneOtps'
 import { CrspSchedule } from './src/collections/CrspSchedule'
+import { ServiceProviders } from './src/collections/ServiceProviders'
+import { Reviews } from './src/collections/Reviews'
+import { Reports } from './src/collections/Reports'
+import { Conversations } from './src/collections/Conversations'
+import { Messages } from './src/collections/Messages'
+import { WhatsAppSubmissions } from './src/collections/WhatsAppSubmissions'
+import { ContactMessages } from './src/collections/ContactMessages'
+import { AuditLogs } from './src/collections/AuditLogs'
+import { VerificationDocuments } from './src/collections/VerificationDocuments'
+import { WhatsAppMessages } from './src/collections/WhatsAppMessages'
+import { WhatsAppMedia } from './src/collections/WhatsAppMedia'
+import { SavedSearches } from './src/collections/SavedSearches'
+import { Notifications } from './src/collections/Notifications'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -29,7 +42,7 @@ export default buildConfig({
     user: Users.slug,
     meta: { titleSuffix: ' — Magariyetu Admin' },
   },
-  collections: [Users, Dealers, Listings, FeaturedOrders, Inquiries, Media, Inspections, PhoneOtps, CrspSchedule],
+  collections: [Users, Dealers, ServiceProviders, Listings, Reviews, Reports, ContactMessages,SavedSearches, Notifications, AuditLogs, VerificationDocuments, Conversations, Messages, WhatsAppSubmissions, WhatsAppMessages, WhatsAppMedia, FeaturedOrders, Inquiries, Media, Inspections, PhoneOtps, CrspSchedule],
   editor: lexicalEditor({}),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'src/payload-types.ts') },

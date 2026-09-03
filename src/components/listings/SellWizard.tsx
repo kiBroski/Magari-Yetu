@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 // Design decision: a person can fill in every field of their listing —
 // category, spec, photos, price, description — without ever hitting a login
@@ -41,12 +41,17 @@ interface FormState {
   title: string
   make: string
   model: string
+  modelNumber: string
   yearOfManufacture: string
   transmission: string
+  driveConfiguration: string
   fuelType: string
   engineCc: string
   mileageKm: string
   bodyType: string
+  grossVehicleWeightKg: string
+  seatingCapacity: string
+  crspValueKes: string
   color: string
   equipmentType: string
   operatingHours: string
@@ -63,8 +68,8 @@ interface FormState {
 }
 
 const EMPTY_FORM: FormState = {
-  category: '', condition: '', title: '', make: '', model: '', yearOfManufacture: '',
-  transmission: '', fuelType: '', engineCc: '', mileageKm: '', bodyType: '', color: '',
+  category: '', condition: '', title: '', make: '', model: '', modelNumber: '', yearOfManufacture: '',
+  transmission: '', driveConfiguration: '', fuelType: '', engineCc: '', mileageKm: '', bodyType: '', grossVehicleWeightKg: '', seatingCapacity: '', crspValueKes: '', color: '',
   equipmentType: '', operatingHours: '', capacityOrTonnage: '',
   partType: '', compatibleModels: '', partCondition: '', dutyStatus: '',
   description: '', county: '', town: '', price: '', negotiable: true,
@@ -72,6 +77,9 @@ const EMPTY_FORM: FormState = {
 
 export function SellWizard() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const whatsappClaimToken = searchParams.get('waClaim')
+  const [whatsappSubmissionId, setWhatsappSubmissionId] = useState<string | null>(null)
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [files, setFiles] = useState<File[]>([])
@@ -87,6 +95,20 @@ export function SellWizard() {
       .then((data) => setUser(data?.user ?? null))
       .catch(() => setUser(null))
   }, [])
+
+  useEffect(() => {
+    if (!whatsappClaimToken) return
+    fetch(`/api/whatsapp/submissions?claimToken=${encodeURIComponent(whatsappClaimToken)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        const submission = data?.draft
+        if (!submission?.parsed) return
+        setWhatsappSubmissionId(submission.id)
+        const parsed = submission.parsed
+        setForm((current) => ({ ...current, condition: parsed.condition ?? current.condition, make: parsed.make ?? current.make, model: parsed.model ?? current.model, yearOfManufacture: parsed.yearOfManufacture ? String(parsed.yearOfManufacture) : current.yearOfManufacture, mileageKm: parsed.mileageKm ? String(parsed.mileageKm) : current.mileageKm, price: parsed.price ? String(parsed.price) : current.price, county: parsed.county ?? current.county, town: parsed.town ?? current.town, description: parsed.description ?? current.description }))
+      })
+      .catch(() => undefined)
+  }, [whatsappClaimToken])
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -137,6 +159,10 @@ export function SellWizard() {
     setSubmitting(true)
     setError(null)
     try {
+      if (whatsappClaimToken && whatsappSubmissionId) {
+        const claim = await fetch('/api/whatsapp/submissions', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: whatsappSubmissionId, action: 'claim', claimToken: whatsappClaimToken }) })
+        if (!claim.ok) throw new Error((await claim.json().catch(() => ({}))).error || 'This WhatsApp draft can no longer be claimed.')
+      }
       // 1. Upload each photo to Media individually, collecting the doc ids.
       const imageRefs: { image: string }[] = []
       for (const file of files) {
@@ -189,10 +215,15 @@ export function SellWizard() {
       } else {
         Object.assign(payload, {
           transmission: form.transmission,
+          driveConfiguration: form.driveConfiguration || undefined,
           fuelType: form.fuelType,
           engineCc: form.engineCc ? Number(form.engineCc) : undefined,
           mileageKm: form.mileageKm ? Number(form.mileageKm) : undefined,
           bodyType: form.bodyType,
+          modelNumber: form.modelNumber || undefined,
+          grossVehicleWeightKg: form.grossVehicleWeightKg ? Number(form.grossVehicleWeightKg) : undefined,
+          seatingCapacity: form.seatingCapacity ? Number(form.seatingCapacity) : undefined,
+          crspValueKes: form.crspValueKes ? Number(form.crspValueKes) : undefined,
           color: form.color,
         })
       }
@@ -206,6 +237,10 @@ export function SellWizard() {
       if (!res.ok) {
         const errBody = await res.json().catch(() => null)
         throw new Error(errBody?.errors?.[0]?.message ?? 'Could not publish your listing.')
+      }
+      const created = await res.json().catch(() => null)
+      if (whatsappSubmissionId) {
+        fetch('/api/whatsapp/submissions', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: whatsappSubmissionId, action: 'convert', listingId: created?.doc?.id ?? created?.id }) }).catch(() => undefined)
       }
       router.push('/dashboard/listings?posted=1')
     } catch (err) {
@@ -258,6 +293,7 @@ export function SellWizard() {
               <Field label="Make"><input required value={form.make} onChange={(e) => update('make', e.target.value)} className={inputCls} /></Field>
               <Field label="Model"><input required value={form.model} onChange={(e) => update('model', e.target.value)} className={inputCls} /></Field>
             </div>
+            {!isHeavyMachinery && !isSpareParts && <Field label="Model number"><input value={form.modelNumber} onChange={(e) => update('modelNumber', e.target.value)} className={inputCls} placeholder="e.g. ZSU60W" /></Field>}
             <div className="grid grid-cols-2 gap-4">
               <Field label="Year of manufacture"><input type="number" required value={form.yearOfManufacture} onChange={(e) => update('yearOfManufacture', e.target.value)} className={`${inputCls} font-mono`} /></Field>
               {!isHeavyMachinery && !isSpareParts && <Field label="Color"><input value={form.color} onChange={(e) => update('color', e.target.value)} className={inputCls} /></Field>}
@@ -304,6 +340,11 @@ export function SellWizard() {
                       <option value="">Select</option><option value="manual">Manual</option><option value="automatic">Automatic</option>
                     </select>
                   </Field>
+                  <Field label="Drive configuration">
+                    <select value={form.driveConfiguration} onChange={(e) => update('driveConfiguration', e.target.value)} className={inputCls}>
+                      <option value="">Select</option><option value="2wd">2WD</option><option value="4wd">4WD</option><option value="awd">AWD</option><option value="fwd">FWD</option><option value="rwd">RWD</option>
+                    </select>
+                  </Field>
                   <Field label="Fuel type">
                     <select value={form.fuelType} onChange={(e) => update('fuelType', e.target.value)} className={inputCls}>
                       <option value="">Select</option><option value="petrol">Petrol</option><option value="diesel">Diesel</option><option value="hybrid">Hybrid</option><option value="electric">Electric</option>
@@ -320,6 +361,11 @@ export function SellWizard() {
                     {['sedan', 'suv', 'hatchback', 'wagon', 'pickup', 'van', 'coupe', 'convertible'].map((b) => <option key={b} value={b}>{b}</option>)}
                   </select>
                 </Field>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="GVW (kg)"><input type="number" min="1" value={form.grossVehicleWeightKg} onChange={(e) => update('grossVehicleWeightKg', e.target.value)} className={`${inputCls} font-mono`} /></Field>
+                  <Field label="Seating"><input type="number" min="1" value={form.seatingCapacity} onChange={(e) => update('seatingCapacity', e.target.value)} className={`${inputCls} font-mono`} /></Field>
+                </div>
+                <Field label="CRSP value (KES)"><input type="number" min="0" value={form.crspValueKes} onChange={(e) => update('crspValueKes', e.target.value)} className={`${inputCls} font-mono`} placeholder="Optional KRA reference value" /></Field>
               </>
             )}
             <Field label="Description"><textarea required rows={5} value={form.description} onChange={(e) => update('description', e.target.value)} className={inputCls} /></Field>

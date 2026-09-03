@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { getPayload } from '@/lib/payload'
+import { clientKey, rateLimit, rateLimitedResponse } from '@/lib/security'
 
 // Step 2. How the OTP-to-session handoff actually works, since Payload
 // doesn't have a native passwordless flow:
@@ -34,6 +35,8 @@ function hashCode(code: string) {
 }
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(clientKey(req, 'otp-verify'), 12, 60 * 60 * 1000)
+  if (!limited.allowed) return rateLimitedResponse(limited.retryAfter)
   if (!process.env.OTP_HASH_SECRET) {
     return NextResponse.json({ error: 'Phone login is temporarily unavailable.' }, { status: 503 })
   }

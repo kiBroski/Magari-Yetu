@@ -3,6 +3,7 @@ import { getPayload } from '@/lib/payload'
 import { getCurrentUser } from '@/lib/auth'
 import { initiateMpesaStkPush } from '@/lib/mpesa'
 import { PLANS } from '@/collections/FeaturedOrders'
+import { clientKey, rateLimit, rateLimitedResponse } from '@/lib/security'
 
 // Step 1 of the boost flow. Creates a FeaturedOrder row status='pending'
 // *before* calling out to Safaricom, so even if the STK push call itself
@@ -17,6 +18,8 @@ import { PLANS } from '@/collections/FeaturedOrders'
 // route. That isolation is the point of routing all provider calls through
 // one module.
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(clientKey(req, 'mpesa-stk'), 5, 60 * 60 * 1000)
+  if (!limited.allowed) return rateLimitedResponse(limited.retryAfter)
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Log in first' }, { status: 401 })
 
