@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import CrspSearch from '@/components/crsp/CrspSearch'
@@ -9,21 +9,40 @@ type CrspRecord = {
   make: string
   model: string
   modelNumber: string | null
-  variant: string | null
   transmission: string | null
   driveConfiguration: string | null
+  engineCapacityText: string | null
   engineCc: number | null
   bodyType: string | null
   gvwKg: number | null
   seatingCapacity: number | null
   fuelType: string | null
-  category: string
+  sourceGroup:
+    | 'motor-vehicle'
+    | 'motorcycle'
+    | 'tractor-grader'
   crspValueKes: number
   verified: boolean
   sourceNote: string | null
   updatedAt: string
   createdAt: string
 }
+
+function displaySourceGroup(
+  sourceGroup: CrspRecord['sourceGroup'],
+): string {
+  switch (sourceGroup) {
+    case 'motor-vehicle':
+      return 'Motor Vehicle'
+    case 'motorcycle':
+      return 'Motorcycle'
+    case 'tractor-grader':
+      return 'Tractor / Grader'
+    default:
+      return sourceGroup
+  }
+}
+
 export default function ImportDutyCalculatorPage() {
   const [selectedCrsp, setSelectedCrsp] = useState<CrspRecord | null>(null)
 
@@ -73,9 +92,9 @@ export default function ImportDutyCalculatorPage() {
                   {selectedCrsp.make} {selectedCrsp.model}
                 </h2>
 
-                {selectedCrsp.variant && (
+                {selectedCrsp.modelNumber && (
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    {selectedCrsp.variant}
+                    Model No: {selectedCrsp.modelNumber}
                   </p>
                 )}
               </div>
@@ -97,9 +116,9 @@ export default function ImportDutyCalculatorPage() {
 
             <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
               <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
-                <p className="text-xs text-gray-500">Category</p>
+                <p className="text-xs text-gray-500">Source</p>
                 <p className="mt-1 font-medium">
-                  {selectedCrsp.category}
+                  {displaySourceGroup(selectedCrsp.sourceGroup)}
                 </p>
               </div>
 
@@ -116,6 +135,44 @@ export default function ImportDutyCalculatorPage() {
                   #{selectedCrsp.id}
                 </p>
               </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+              {selectedCrsp.engineCapacityText && (
+                <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+                  <p className="text-xs text-gray-500">Engine</p>
+                  <p className="mt-1 font-medium">
+                    {selectedCrsp.engineCapacityText}
+                  </p>
+                </div>
+              )}
+
+              {selectedCrsp.fuelType && (
+                <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+                  <p className="text-xs text-gray-500">Fuel</p>
+                  <p className="mt-1 font-medium">
+                    {selectedCrsp.fuelType}
+                  </p>
+                </div>
+              )}
+
+              {selectedCrsp.transmission && (
+                <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+                  <p className="text-xs text-gray-500">Transmission</p>
+                  <p className="mt-1 font-medium">
+                    {selectedCrsp.transmission}
+                  </p>
+                </div>
+              )}
+
+              {selectedCrsp.driveConfiguration && (
+                <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+                  <p className="text-xs text-gray-500">Drive</p>
+                  <p className="mt-1 font-medium">
+                    {selectedCrsp.driveConfiguration}
+                  </p>
+                </div>
+              )}
             </div>
 
             {selectedCrsp.sourceNote && (

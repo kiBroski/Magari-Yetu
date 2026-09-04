@@ -7,15 +7,18 @@ type CrspRecord = {
   make: string
   model: string
   modelNumber: string | null
-  variant: string | null
   transmission: string | null
   driveConfiguration: string | null
+  engineCapacityText: string | null
   engineCc: number | null
   bodyType: string | null
   gvwKg: number | null
   seatingCapacity: number | null
   fuelType: string | null
-  category: string
+  sourceGroup:
+    | 'motor-vehicle'
+    | 'motorcycle'
+    | 'tractor-grader'
   crspValueKes: number
   verified: boolean
   sourceNote: string | null
@@ -58,7 +61,9 @@ function titleCase(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
-function displayValue(value: string | number | null | undefined) {
+function displayValue(
+  value: string | number | null | undefined,
+) {
   if (value === null || value === undefined) return null
 
   const text = String(value).trim()
@@ -79,6 +84,24 @@ function displayFuel(value: string | null) {
   return titleCase(value)
 }
 
+function displaySourceGroup(
+  value: CrspRecord['sourceGroup'],
+) {
+  if (value === 'motor-vehicle') {
+    return 'Motor Vehicle'
+  }
+
+  if (value === 'motorcycle') {
+    return 'Motorcycle'
+  }
+
+  if (value === 'tractor-grader') {
+    return 'Tractor & Grader'
+  }
+
+  return '—'
+}
+
 export default function CrspSearch({
   initialLimit = DEFAULT_LIMIT,
   showFilters = true,
@@ -87,16 +110,22 @@ export default function CrspSearch({
   const [query, setQuery] = useState('')
   const [make, setMake] = useState('')
   const [model, setModel] = useState('')
-  const [category, setCategory] = useState('')
+  const [sourceGroup, setSourceGroup] = useState('')
   const [verified, setVerified] = useState('')
   const [page, setPage] = useState(1)
 
-  const [data, setData] = useState<CrspResponse | null>(null)
+  const [data, setData] = useState<CrspResponse | null>(
+    null,
+  )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const [makeOptions, setMakeOptions] = useState<string[]>([])
-  const [modelOptions, setModelOptions] = useState<string[]>([])
+  const [makeOptions, setMakeOptions] = useState<string[]>(
+    [],
+  )
+  const [modelOptions, setModelOptions] = useState<
+    string[]
+  >([])
 
   const limit =
     initialLimit > 0
@@ -122,8 +151,8 @@ export default function CrspSearch({
         params.set('model', model.trim())
       }
 
-      if (category) {
-        params.set('category', category)
+      if (sourceGroup) {
+        params.set('sourceGroup', sourceGroup)
       }
 
       if (verified) {
@@ -165,7 +194,15 @@ export default function CrspSearch({
     } finally {
       setLoading(false)
     }
-  }, [query, make, model, category, verified, page, limit])
+  }, [
+    query,
+    make,
+    model,
+    sourceGroup,
+    verified,
+    page,
+    limit,
+  ])
 
   useEffect(() => {
     fetchCrsp()
@@ -174,9 +211,10 @@ export default function CrspSearch({
   /*
    * Load all available makes.
    *
-   * The API is paginated, so we intentionally request a larger page.
-   * If the CRSP schedule contains more than 100 records, the make list
-   * is progressively loaded from subsequent pages.
+   * The API is paginated, so we intentionally request a
+   * larger page. If the CRSP schedule contains more than
+   * 100 records, the make list is progressively loaded
+   * from subsequent pages.
    */
   useEffect(() => {
     let cancelled = false
@@ -220,7 +258,8 @@ export default function CrspSearch({
           for (const response of responses) {
             if (!response.ok) continue
 
-            const json: CrspResponse = await response.json()
+            const json: CrspResponse =
+              await response.json()
 
             allDocs.push(...(json.docs ?? []))
           }
@@ -238,7 +277,10 @@ export default function CrspSearch({
 
         setMakeOptions(makes)
       } catch (err) {
-        console.error('Failed to load CRSP makes:', err)
+        console.error(
+          'Failed to load CRSP makes:',
+          err,
+        )
       }
     }
 
@@ -300,9 +342,12 @@ export default function CrspSearch({
             })
 
             requests.push(
-              fetch(`/api/crsp-schedule?${params.toString()}`, {
-                cache: 'no-store',
-              }),
+              fetch(
+                `/api/crsp-schedule?${params.toString()}`,
+                {
+                  cache: 'no-store',
+                },
+              ),
             )
           }
 
@@ -311,7 +356,8 @@ export default function CrspSearch({
           for (const response of responses) {
             if (!response.ok) continue
 
-            const json: CrspResponse = await response.json()
+            const json: CrspResponse =
+              await response.json()
 
             allDocs.push(...(json.docs ?? []))
           }
@@ -329,7 +375,10 @@ export default function CrspSearch({
 
         setModelOptions(models)
       } catch (err) {
-        console.error('Failed to load CRSP models:', err)
+        console.error(
+          'Failed to load CRSP models:',
+          err,
+        )
 
         if (!cancelled) {
           setModelOptions([])
@@ -349,7 +398,9 @@ export default function CrspSearch({
       return 'No vehicles found'
     }
 
-    const start = (data.page - 1) * data.limit + 1
+    const start =
+      (data.page - 1) * data.limit + 1
+
     const end = Math.min(
       data.page * data.limit,
       data.totalDocs,
@@ -369,7 +420,7 @@ export default function CrspSearch({
     setQuery('')
     setMake('')
     setModel('')
-    setCategory('')
+    setSourceGroup('')
     setVerified('')
     setPage(1)
   }
@@ -385,15 +436,18 @@ export default function CrspSearch({
     setPage(1)
   }
 
-  function changeCategory(value: string) {
-    setCategory(value)
+  function changeSourceGroup(value: string) {
+    setSourceGroup(value)
     setPage(1)
   }
 
   function goToPage(nextPage: number) {
     if (nextPage < 1) return
 
-    if (data && nextPage > data.totalPages) {
+    if (
+      data &&
+      nextPage > data.totalPages
+    ) {
       return
     }
 
@@ -440,7 +494,9 @@ export default function CrspSearch({
                 disabled={loading}
                 className="w-full rounded-xl bg-black px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >
-                {loading ? 'Searching...' : 'Search'}
+                {loading
+                  ? 'Searching...'
+                  : 'Search'}
               </button>
             </div>
           </div>
@@ -459,7 +515,9 @@ export default function CrspSearch({
                   id="crsp-make"
                   value={make}
                   onChange={(event) =>
-                    changeMake(event.target.value)
+                    changeMake(
+                      event.target.value,
+                    )
                   }
                   className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900"
                 >
@@ -491,7 +549,9 @@ export default function CrspSearch({
                     id="crsp-model"
                     value={model}
                     onChange={(event) =>
-                      changeModel(event.target.value)
+                      changeModel(
+                        event.target.value,
+                      )
                     }
                     className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900"
                   >
@@ -514,7 +574,9 @@ export default function CrspSearch({
                     type="text"
                     value={model}
                     onChange={(event) => {
-                      setModel(event.target.value)
+                      setModel(
+                        event.target.value,
+                      )
                       setPage(1)
                     }}
                     placeholder={
@@ -530,63 +592,36 @@ export default function CrspSearch({
 
               <div>
                 <label
-                  htmlFor="crsp-category"
+                  htmlFor="crsp-source-group"
                   className="mb-1.5 block text-sm font-medium"
                 >
-                  Category
+                  Source
                 </label>
 
                 <select
-                  id="crsp-category"
-                  value={category}
+                  id="crsp-source-group"
+                  value={sourceGroup}
                   onChange={(event) =>
-                    changeCategory(event.target.value)
+                    changeSourceGroup(
+                      event.target.value,
+                    )
                   }
                   className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900"
                 >
                   <option value="">
-                    All categories
+                    All vehicle types
                   </option>
 
-                  <option value="car">
-                    Cars
+                  <option value="motor-vehicle">
+                    Motor Vehicles
                   </option>
 
                   <option value="motorcycle">
                     Motorcycles
                   </option>
 
-                  
-                  <option value="tractor">
-                    Tractors
-                  </option>
-
-                  <option value="heavy-machinery">
-                    Heavy Machinery
-                  </option>
-
-                  <option value="pickup-van">
-                    Pickup / Van
-                  </option>
-
-                  <option value="truck">
-                    Trucks
-                  </option>
-
-                  <option value="bus">
-                    Buses
-                  </option>
-
-                  <option value="trailer">
-                    Trailers
-                  </option>
-
-                  <option value="tuk-tuk">
-                    Tuk-Tuks
-                  </option>
-
-                  <option value="spare-parts">
-                    Spare Parts
+                  <option value="tractor-grader">
+                    Tractors &amp; Graders
                   </option>
                 </select>
               </div>
@@ -603,7 +638,9 @@ export default function CrspSearch({
                   id="crsp-verified"
                   value={verified}
                   onChange={(event) => {
-                    setVerified(event.target.value)
+                    setVerified(
+                      event.target.value,
+                    )
                     setPage(1)
                   }}
                   className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900"
@@ -627,7 +664,7 @@ export default function CrspSearch({
           {(query ||
             make ||
             model ||
-            category ||
+            sourceGroup ||
             verified) && (
             <button
               type="button"
@@ -679,30 +716,34 @@ export default function CrspSearch({
         {data?.docs?.length ? (
           <div className="divide-y divide-gray-200 dark:divide-gray-800">
             {data.docs.map((record) => {
-              const modelNumber = displayValue(
-                record.modelNumber,
-              )
+              const modelNumber =
+                displayValue(
+                  record.modelNumber,
+                )
 
-              const variant = displayValue(
-                record.variant,
-              )
-
-              const transmission = displayValue(
-                record.transmission,
-              )
+              const transmission =
+                displayValue(
+                  record.transmission,
+                )
 
               const driveConfiguration =
                 displayValue(
                   record.driveConfiguration,
                 )
 
-              const bodyType = displayValue(
-                record.bodyType,
-              )
+              const engineCapacityText =
+                displayValue(
+                  record.engineCapacityText,
+                )
+
+              const bodyType =
+                displayValue(record.bodyType)
 
               const engineCc =
                 record.engineCc !== null &&
-                Number.isFinite(record.engineCc)
+                Number.isFinite(
+                  record.engineCc,
+                )
                   ? record.engineCc
                   : null
 
@@ -720,9 +761,8 @@ export default function CrspSearch({
                   ? record.seatingCapacity
                   : null
 
-              const fuelType = displayFuel(
-                record.fuelType,
-              )
+              const fuelType =
+                displayFuel(record.fuelType)
 
               return (
                 <button
@@ -753,12 +793,6 @@ export default function CrspSearch({
                               </span>
                             )}
                           </div>
-
-                          {variant && (
-                            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                              {variant}
-                            </p>
-                          )}
                         </div>
 
                         <div className="shrink-0 sm:text-right">
@@ -787,12 +821,12 @@ export default function CrspSearch({
 
                         <div>
                           <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                            Category
+                            Source
                           </p>
 
                           <p className="mt-1 font-medium text-gray-800 dark:text-gray-200">
-                            {titleCase(
-                              record.category,
+                            {displaySourceGroup(
+                              record.sourceGroup,
                             )}
                           </p>
                         </div>
@@ -803,9 +837,10 @@ export default function CrspSearch({
                           </p>
 
                           <p className="mt-1 font-medium text-gray-800 dark:text-gray-200">
-                            {engineCc !== null
-                              ? `${engineCc.toLocaleString()} cc`
-                              : '—'}
+                            {engineCapacityText ??
+                              (engineCc !== null
+                                ? `${engineCc.toLocaleString()} cc`
+                                : '—')}
                           </p>
                         </div>
 

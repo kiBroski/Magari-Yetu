@@ -1,20 +1,33 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from '@/lib/payload'
 import { getCurrentUser } from '@/lib/auth'
-import type { Category, FuelType } from '@/lib/dutyCalculator'
 import type { Where } from 'payload'
 
 const EXPECTED_HEADERS = [
   'make',
   'model',
-  'variant',
+  'modelNumber',
+  'transmission',
+  'driveConfiguration',
+  'engineCapacityText',
   'engineCc',
+  'bodyType',
+  'gvwKg',
+  'seatingCapacity',
   'fuelType',
-  'category',
+  'sourceGroup',
   'crspValueKes',
   'verified',
   'sourceNote',
 ]
+
+const SOURCE_GROUPS = [
+  'motor-vehicle',
+  'motorcycle',
+  'tractor-grader',
+] as const
+
+type SourceGroup = (typeof SOURCE_GROUPS)[number]
 
 function parseCsv(text: string): Record<string, string>[] {
   const lines = text.trim().split(/\r?\n/)
@@ -58,13 +71,13 @@ export async function GET(req: NextRequest) {
     const query = searchParams.get('q')?.trim()
     const make = searchParams.get('make')?.trim()
     const model = searchParams.get('model')?.trim()
-    const category = searchParams.get('category')?.trim()
+    const sourceGroup = searchParams.get('sourceGroup')?.trim()
     const verified = searchParams.get('verified')
 
     const conditions: Where[] = []
 
     /*
-     * Structured make filter
+     * Structured make filter.
      */
     if (make) {
       conditions.push({
@@ -75,7 +88,7 @@ export async function GET(req: NextRequest) {
     }
 
     /*
-     * Structured model filter
+     * Structured model filter.
      */
     if (model) {
       conditions.push({
@@ -86,18 +99,23 @@ export async function GET(req: NextRequest) {
     }
 
     /*
-     * Structured category filter
+     * Source-sheet family filter.
+     *
+     * Allowed values:
+     * - motor-vehicle
+     * - motorcycle
+     * - tractor-grader
      */
-    if (category) {
+    if (sourceGroup) {
       conditions.push({
-        category: {
-          equals: category,
+        sourceGroup: {
+          equals: sourceGroup,
         },
       })
     }
 
     /*
-     * Verified filter
+     * Verified filter.
      */
     if (verified !== null) {
       conditions.push({
@@ -114,17 +132,7 @@ export async function GET(req: NextRequest) {
      *
      *   ?q=Toyota Vitz
      *
-     * becomes:
-     *
-     *   Toyota must appear in make/model/variant
-     *   AND
-     *   Vitz must appear in make/model/variant
-     *
-     * This allows:
-     *
-     *   TOYOTA + VITZ HYBRID U
-     *
-     * to match "Toyota Vitz".
+     * Each word must appear in make, model or model number.
      */
     if (query) {
       const words = query
@@ -146,7 +154,7 @@ export async function GET(req: NextRequest) {
               },
             },
             {
-              variant: {
+              modelNumber: {
                 like: word,
               },
             },
@@ -167,10 +175,12 @@ export async function GET(req: NextRequest) {
       where,
       limit,
       page,
-      // The schedule is a reference catalogue, not a newest-first feed.
-      // Returning it in make/model order keeps every consumer (search,
-      // calculator and select lists) consistently A–Z.
-      sort: 'make,model,variant',
+
+      /*
+       * CRSP is a reference catalogue, not a newest-first feed.
+       * Keep results consistently A-Z.
+       */
+      sort: 'make,model,modelNumber',
     })
 
     return NextResponse.json(result)
@@ -250,19 +260,45 @@ export async function POST(req: NextRequest) {
 
     for (const [i, row] of rows.entries()) {
       try {
+        /*
+         * Payload select fields only accept the declared values.
+         * Validate the CSV value before creating the record.
+         */
+        const sourceGroup = SOURCE_GROUPS.includes(
+          row.sourceGroup as SourceGroup,
+        )
+          ? (row.sourceGroup as SourceGroup)
+          : null
+
+        if (!sourceGroup) {
+          throw new Error(
+            `Invalid sourceGroup "${row.sourceGroup}". Expected motor-vehicle, motorcycle, or tractor-grader.`,
+          )
+        }
+
         await payload.create({
           collection: 'crsp-schedule',
           data: {
             make: row.make,
             model: row.model,
-            variant: row.variant || undefined,
+            modelNumber: row.modelNumber || undefined,
+            transmission: row.transmission || undefined,
+            driveConfiguration:
+              row.driveConfiguration || undefined,
+            engineCapacityText:
+              row.engineCapacityText || undefined,
             engineCc: row.engineCc
               ? Number(row.engineCc)
               : undefined,
-            fuelType: row.fuelType
-              ? (row.fuelType as FuelType)
+            bodyType: row.bodyType || undefined,
+            gvwKg: row.gvwKg
+              ? Number(row.gvwKg)
               : undefined,
-            category: row.category as Category,
+            seatingCapacity: row.seatingCapacity
+              ? Number(row.seatingCapacity)
+              : undefined,
+            fuelType: row.fuelType || undefined,
+            sourceGroup,
             crspValueKes: Number(row.crspValueKes),
             verified:
               row.verified?.toLowerCase() === 'true',

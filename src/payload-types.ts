@@ -508,47 +508,64 @@ export interface VerificationDocument {
  */
 export interface CrspSchedule {
   id: number;
+  /**
+   * Make/manufacturer exactly as supplied by the KRA CRSP source.
+   */
   make: string;
+  /**
+   * Vehicle, motorcycle, tractor or grader model exactly as supplied by the KRA CRSP source.
+   */
   model: string;
   /**
-   * KRA model number, where supplied in the source schedule.
+   * KRA model number where supplied by the source schedule.
    */
   modelNumber?: string | null;
   /**
-   * Trim/spec descriptor, e.g. "G Package", "TX-L", "2.0G" — KRA's real list is trim-specific, not just make+model.
+   * Transmission exactly as supplied by the KRA source, for example AT, 6MT or CVT.
    */
-  variant?: string | null;
   transmission?: string | null;
   /**
-   * For example 2WD, 4WD, AWD, FWD or RWD.
+   * Drive configuration where supplied, for example 2WD, 4WD, AWD, FWD or RWD.
    */
   driveConfiguration?: string | null;
+  /**
+   * Original KRA engine-capacity value preserved as text. This supports values such as 3000, 399 and 63 kWh.
+   */
+  engineCapacityText?: string | null;
+  /**
+   * Numeric engine capacity in cc, populated only when the KRA source value is a numeric cc value.
+   */
   engineCc?: number | null;
-  fuelType?: ('petrol' | 'diesel' | 'hybrid' | 'electric') | null;
+  /**
+   * Body type where supplied by the KRA motor-vehicle schedule, for example SUV or HATCHBACK.
+   */
   bodyType?: string | null;
   /**
-   * Gross vehicle weight in kilograms.
+   * Gross vehicle weight in kilograms where supplied by the KRA source.
    */
   gvwKg?: number | null;
+  /**
+   * Seating capacity where supplied by the KRA source.
+   */
   seatingCapacity?: number | null;
-  category:
-    | 'car'
-    | 'motorcycle'
-    | 'tractor'
-    | 'heavy-machinery'
-    | 'pickup-van'
-    | 'truck'
-    | 'bus'
-    | 'trailer'
-    | 'tuk-tuk'
-    | 'spare-parts';
+  /**
+   * Fuel value exactly as supplied by the KRA source, such as GASOLINE, DIESEL, HYBRID or ELECTRIC.
+   */
+  fuelType?: string | null;
+  /**
+   * The actual CRSP source-sheet family. These values correspond to the three vehicle-data sheets in the July 2025 KRA workbook.
+   */
+  sourceGroup: 'motor-vehicle' | 'motorcycle' | 'tractor-grader';
+  /**
+   * Current Retail Selling Price (CRSP) in Kenyan shillings, as supplied by the KRA source.
+   */
   crspValueKes: number;
   /**
-   * True only if this figure is confirmed against an actual KRA-published source — not a general market estimate.
+   * True when this row has been imported from or directly verified against the official KRA CRSP source.
    */
   verified?: boolean | null;
   /**
-   * Where this number came from. Required in spirit even though not enforced as required — every row should have one.
+   * Source/provenance note, including the KRA workbook and source sheet used for this record.
    */
   sourceNote?: string | null;
   updatedAt: string;
@@ -1582,15 +1599,15 @@ export interface CrspScheduleSelect<T extends boolean = true> {
   make?: T;
   model?: T;
   modelNumber?: T;
-  variant?: T;
   transmission?: T;
   driveConfiguration?: T;
+  engineCapacityText?: T;
   engineCc?: T;
-  fuelType?: T;
   bodyType?: T;
   gvwKg?: T;
   seatingCapacity?: T;
-  category?: T;
+  fuelType?: T;
+  sourceGroup?: T;
   crspValueKes?: T;
   verified?: T;
   sourceNote?: T;
