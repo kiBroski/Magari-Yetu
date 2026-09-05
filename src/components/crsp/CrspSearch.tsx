@@ -464,7 +464,7 @@ export default function CrspSearch({
       className="w-full space-y-6"
       style={{ colorScheme: 'light' }}
     >
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 text-gray-900 shadow-sm">
         <form
           onSubmit={handleSearch}
           className="space-y-4"
@@ -683,7 +683,7 @@ export default function CrspSearch({
       {error && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"
+          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
         >
           <p className="font-semibold">
             Could not load CRSP schedule
@@ -704,7 +704,7 @@ export default function CrspSearch({
       )}
 
       <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-gray-600">
           {showingText}
         </p>
 
@@ -715,7 +715,7 @@ export default function CrspSearch({
         )}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white text-gray-900 shadow-sm">
         {data?.docs?.length ? (
           <div className="divide-y divide-gray-200 dark:divide-gray-800">
             {data.docs.map((record) => {
@@ -776,7 +776,7 @@ export default function CrspSearch({
                   }
                   className={`block w-full text-left transition ${
                     onSelect
-                      ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900'
+                      ? 'cursor-pointer hover:bg-gray-50'
                       : 'cursor-default'
                   }`}
                 >
@@ -791,7 +791,7 @@ export default function CrspSearch({
                             </h3>
 
                             {record.verified && (
-                              <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-950 dark:text-green-300">
+                              <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
                                 Verified
                               </span>
                             )}
@@ -811,13 +811,13 @@ export default function CrspSearch({
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 gap-3 rounded-xl bg-gray-50 p-3 text-sm dark:bg-gray-900/60 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="grid grid-cols-1 gap-3 rounded-xl bg-gray-50 p-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
                         <div>
                           <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                             Model number
                           </p>
 
-                          <p className="mt-1 font-medium text-gray-800 dark:text-gray-200">
+                          <p className="mt-1 font-medium text-gray-800">
                             {modelNumber ?? '—'}
                           </p>
                         </div>
@@ -827,7 +827,7 @@ export default function CrspSearch({
                             Source
                           </p>
 
-                          <p className="mt-1 font-medium text-gray-800 dark:text-gray-200">
+                          <p className="mt-1 font-medium text-gray-800">
                             {displaySourceGroup(
                               record.sourceGroup,
                             )}
@@ -839,7 +839,7 @@ export default function CrspSearch({
                             Engine
                           </p>
 
-                          <p className="mt-1 font-medium text-gray-800 dark:text-gray-200">
+                          <p className="mt-1 font-medium text-gray-800">
                             {engineCapacityText ??
                               (engineCc !== null
                                 ? `${engineCc.toLocaleString()} cc`
@@ -852,7 +852,7 @@ export default function CrspSearch({
                             Fuel
                           </p>
 
-                          <p className="mt-1 font-medium text-gray-800 dark:text-gray-200">
+                          <p className="mt-1 font-medium text-gray-800">
                             {fuelType ?? '—'}
                           </p>
                         </div>
@@ -862,7 +862,7 @@ export default function CrspSearch({
                             Transmission
                           </p>
 
-                          <p className="mt-1 font-medium text-gray-800 dark:text-gray-200">
+                          <p className="mt-1 font-medium text-gray-800">
                             {transmission ?? '—'}
                           </p>
                         </div>
@@ -872,7 +872,7 @@ export default function CrspSearch({
                             Drive
                           </p>
 
-                          <p className="mt-1 font-medium text-gray-800 dark:text-gray-200">
+                          <p className="mt-1 font-medium text-gray-800">
                             {driveConfiguration ??
                               '—'}
                           </p>
@@ -883,7 +883,7 @@ export default function CrspSearch({
                             Body type
                           </p>
 
-                          <p className="mt-1 font-medium text-gray-800 dark:text-gray-200">
+                          <p className="mt-1 font-medium text-gray-800">
                             {bodyType ?? '—'}
                           </p>
                         </div>
@@ -893,7 +893,7 @@ export default function CrspSearch({
                             Seating
                           </p>
 
-                          <p className="mt-1 font-medium text-gray-800 dark:text-gray-200">
+                          <p className="mt-1 font-medium text-gray-800">
                             {seatingCapacity !== null
                               ? seatingCapacity
                               : '—'}
@@ -905,7 +905,7 @@ export default function CrspSearch({
                             GVW
                           </p>
 
-                          <p className="mt-1 font-medium text-gray-800 dark:text-gray-200">
+                          <p className="mt-1 font-medium text-gray-800">
                             {gvwKg !== null
                               ? `${gvwKg.toLocaleString()} kg`
                               : '—'}
@@ -955,9 +955,9 @@ export default function CrspSearch({
             ← Previous
           </button>
 
-          <div className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-sm text-gray-600">
             Page{' '}
-            <span className="font-semibold text-gray-900 dark:text-gray-100">
+            <span className="font-semibold text-gray-900">
               {data.page}
             </span>{' '}
             of {data.totalPages}

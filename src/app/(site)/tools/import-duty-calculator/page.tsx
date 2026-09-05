@@ -47,14 +47,17 @@ export default function ImportDutyCalculatorPage() {
   const [selectedCrsp, setSelectedCrsp] = useState<CrspRecord | null>(null)
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <main
+      className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8"
+      style={{ colorScheme: 'light' }}
+    >
       <div className="space-y-8">
         <header>
           <h1 className="text-3xl font-bold tracking-tight">
             Kenya Import Duty Calculator
           </h1>
 
-          <p className="mt-2 max-w-3xl text-gray-600 dark:text-gray-400">
+          <p className="mt-2 max-w-3xl text-gray-600">
             Search the KRA CRSP schedule, select your vehicle, and use the
             official CRSP value as the customs reference value.
           </p>
@@ -66,7 +69,7 @@ export default function ImportDutyCalculatorPage() {
               Find your vehicle
             </h2>
 
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            <p className="mt-1 text-sm text-gray-600">
               Search by make, model, or vehicle name.
             </p>
           </div>
@@ -81,7 +84,7 @@ export default function ImportDutyCalculatorPage() {
         </section>
 
         {selectedCrsp && (
-          <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+          <section className="rounded-2xl border border-gray-200 bg-white p-5 text-gray-900 shadow-sm">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -93,7 +96,7 @@ export default function ImportDutyCalculatorPage() {
                 </h2>
 
                 {selectedCrsp.modelNumber && (
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                  <p className="mt-1 text-sm text-gray-600">
                     Model No: {selectedCrsp.modelNumber}
                   </p>
                 )}
@@ -115,21 +118,21 @@ export default function ImportDutyCalculatorPage() {
             </div>
 
             <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-              <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+              <div className="rounded-xl bg-gray-50 p-3">
                 <p className="text-xs text-gray-500">Source</p>
                 <p className="mt-1 font-medium">
                   {displaySourceGroup(selectedCrsp.sourceGroup)}
                 </p>
               </div>
 
-              <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+              <div className="rounded-xl bg-gray-50 p-3">
                 <p className="text-xs text-gray-500">Verification</p>
                 <p className="mt-1 font-medium">
                   {selectedCrsp.verified ? 'Verified' : 'Unverified'}
                 </p>
               </div>
 
-              <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+              <div className="rounded-xl bg-gray-50 p-3">
                 <p className="text-xs text-gray-500">CRSP record ID</p>
                 <p className="mt-1 font-medium">
                   #{selectedCrsp.id}
@@ -139,7 +142,7 @@ export default function ImportDutyCalculatorPage() {
 
             <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
               {selectedCrsp.engineCapacityText && (
-                <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+                <div className="rounded-xl bg-gray-50 p-3">
                   <p className="text-xs text-gray-500">Engine</p>
                   <p className="mt-1 font-medium">
                     {selectedCrsp.engineCapacityText}
@@ -148,7 +151,7 @@ export default function ImportDutyCalculatorPage() {
               )}
 
               {selectedCrsp.fuelType && (
-                <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+                <div className="rounded-xl bg-gray-50 p-3">
                   <p className="text-xs text-gray-500">Fuel</p>
                   <p className="mt-1 font-medium">
                     {selectedCrsp.fuelType}
@@ -157,7 +160,7 @@ export default function ImportDutyCalculatorPage() {
               )}
 
               {selectedCrsp.transmission && (
-                <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+                <div className="rounded-xl bg-gray-50 p-3">
                   <p className="text-xs text-gray-500">Transmission</p>
                   <p className="mt-1 font-medium">
                     {selectedCrsp.transmission}
@@ -166,7 +169,7 @@ export default function ImportDutyCalculatorPage() {
               )}
 
               {selectedCrsp.driveConfiguration && (
-                <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+                <div className="rounded-xl bg-gray-50 p-3">
                   <p className="text-xs text-gray-500">Drive</p>
                   <p className="mt-1 font-medium">
                     {selectedCrsp.driveConfiguration}
