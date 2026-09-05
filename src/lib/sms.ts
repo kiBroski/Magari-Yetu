@@ -36,4 +36,3 @@ export async function sendSms(phone: string, message: string): Promise<void> {
   if (recipient && recipient.status !== 'Success') {
     throw new Error(`Africa's Talking Delivery Failed: ${recipient.status} (Cost: ${recipient.cost})`)
   }
-}

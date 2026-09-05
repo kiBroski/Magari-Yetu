@@ -70,16 +70,16 @@ export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'src/payload-types.ts') },
   email: resendAdapter({
-    defaultFromAddress: 'onboarding@resend.dev',
+    defaultFromAddress: process.env.EMAIL_FROM || 'onboarding@resend.dev',
     defaultFromName: 'Magariyetu',
-    apiKey: process.env.RESEND_API_KEY || '',
+    apiKey: process.env.RESEND_API_KEY || 're_dummy_key_for_build', // Fallback prevents build errors
   }),
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
       ssl:
         process.env.NODE_ENV === 'production'
-          ? { rejectUnauthorized: true }
+          ? { rejectUnauthorized: false } // Fixed: set to false for Supabase/Neon connection poolers
           : false,
       connectionTimeoutMillis: 10000,
       idleTimeoutMillis: 30000,
@@ -94,6 +94,9 @@ export default buildConfig({
         media: true,
         'verification-documents': true,
         'whatsapp-media': true,
+      },
+      options: {
+        access: 'public', // Ensures vehicle images and uploaded files render on public URLs
       },
       token: process.env.BLOB_READ_WRITE_TOKEN,
     }),
