@@ -180,7 +180,7 @@ export async function GET(req: NextRequest) {
        * CRSP is a reference catalogue, not a newest-first feed.
        * Keep results consistently A-Z.
        */
-      sort: 'make,model,modelNumber',
+      sort: 'sourceGroup,make,model,modelNumber',
     })
 
     return NextResponse.json(result)

@@ -324,7 +324,10 @@ export const ImportDutyCalculator: React.FC<
     })
 
   return (
-    <div className="mx-auto max-w-3xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div
+      className="mx-auto max-w-3xl rounded-xl border border-gray-200 bg-white p-6 text-gray-900 shadow-sm"
+      style={{ colorScheme: 'light' }}
+    >
       <h2 className="mb-4 text-xl font-bold text-gray-900">
         KRA Vehicle Import Duty Calculator
       </h2>
@@ -343,13 +346,13 @@ export const ImportDutyCalculator: React.FC<
               setCrspSearch(e.target.value)
             }
             placeholder="Search make or model, e.g. Toyota Vitz"
-            className="mb-2 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500"
+            className="mb-2 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500"
           />
 
           <select
             value={selectedCrspId}
             onChange={handleVehicleSelect}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500"
+            className="w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500"
           >
             <option value="">
               {crspLoading
@@ -412,7 +415,7 @@ export const ImportDutyCalculator: React.FC<
                 Number(e.target.value),
               )
             }
-            className="w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-amber-500 focus:ring-amber-500"
+            className="w-full rounded-lg border border-gray-300 bg-white p-2 text-sm text-gray-900 focus:border-amber-500 focus:ring-amber-500"
           />
         </div>
 
@@ -507,7 +510,7 @@ export const ImportDutyCalculator: React.FC<
                 Number(e.target.value),
               )
             }
-            className="w-full rounded-lg border border-gray-300 p-2 text-sm disabled:bg-gray-100 disabled:text-gray-400 focus:border-amber-500 focus:ring-amber-500"
+            className="w-full rounded-lg border border-gray-300 bg-white p-2 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-400 focus:border-amber-500 focus:ring-amber-500"
           />
         </div>
 
