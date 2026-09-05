@@ -4,6 +4,8 @@ import { getPayload } from '@/lib/payload'
 import { ModerationProviderActions } from '@/components/dashboard/ModerationProviderActions'
 import { WhatsAppOnboardingActions } from '@/components/dashboard/WhatsAppOnboardingActions'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ModerationPage() {
   const user = await getCurrentUser()
   if (!user || !['admin', 'moderator'].includes(user.role)) redirect('/dashboard')
