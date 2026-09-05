@@ -42,7 +42,30 @@ export default buildConfig({
     user: Users.slug,
     meta: { titleSuffix: ' — Magariyetu Admin' },
   },
-  collections: [Users, Dealers, ServiceProviders, Listings, Reviews, Reports, ContactMessages,SavedSearches, Notifications, AuditLogs, VerificationDocuments, Conversations, Messages, WhatsAppSubmissions, WhatsAppMessages, WhatsAppMedia, FeaturedOrders, Inquiries, Media, Inspections, PhoneOtps, CrspSchedule],
+  collections: [
+    Users,
+    Dealers,
+    ServiceProviders,
+    Listings,
+    Reviews,
+    Reports,
+    ContactMessages,
+    SavedSearches,
+    Notifications,
+    AuditLogs,
+    VerificationDocuments,
+    Conversations,
+    Messages,
+    WhatsAppSubmissions,
+    WhatsAppMessages,
+    WhatsAppMedia,
+    FeaturedOrders,
+    Inquiries,
+    Media,
+    Inspections,
+    PhoneOtps,
+    CrspSchedule,
+  ],
   editor: lexicalEditor({}),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'src/payload-types.ts') },
@@ -54,7 +77,10 @@ export default buildConfig({
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      ssl:
+        process.env.NODE_ENV === 'production'
+          ? { rejectUnauthorized: true }
+          : false,
       connectionTimeoutMillis: 10000,
       idleTimeoutMillis: 30000,
       max: 10,
@@ -64,7 +90,11 @@ export default buildConfig({
   csrf: [serverURL],
   plugins: [
     vercelBlobStorage({
-      collections: { media: true },
+      collections: {
+        media: true,
+        'verification-documents': true,
+        'whatsapp-media': true,
+      },
       token: process.env.BLOB_READ_WRITE_TOKEN,
     }),
   ],
